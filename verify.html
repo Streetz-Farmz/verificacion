@@ -3,23 +3,366 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Authenticity Verification</title>
+  <title>STREET FARMZ — Authenticity</title>
+  <meta name="theme-color" content="#0b0b0f"/>
+
   <style>
-    body{font-family:system-ui,Arial;margin:0;padding:24px;max-width:720px}
-    h1{margin:0 0 10px 0}
-    .title{font-size:34px;font-weight:900;margin:14px 0 10px 0}
-    .card{border:1px solid #e5e5e5;border-radius:14px;padding:16px}
-    .big{font-size:30px;font-weight:900;margin-top:10px}
-    .meta{color:#444;margin-top:10px;line-height:1.45}
-    code{background:#f6f6f6;padding:2px 6px;border-radius:6px}
+    :root{
+      --bg:#07070a;
+      --panel:#0c0c12;
+      --panel2:#0a0a10;
+      --text:#f4f4ff;
+      --muted:#b9b9d0;
+
+      --orange:#ff8a00;
+      --orange2:#ffb000;
+
+      --blue:#21b8ff;
+      --blue2:#0066ff;
+
+      --good:#46ff9a;
+      --bad:#ff3b5c;
+
+      --shadow: 0 18px 60px rgba(0,0,0,.65);
+      --border: 1px solid rgba(255,138,0,.35);
+      --radius: 18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(33,184,255,.10), transparent 60%),
+        radial-gradient(900px 500px at 80% 30%, rgba(255,138,0,.10), transparent 65%),
+        radial-gradient(700px 400px at 50% 95%, rgba(0,102,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg), #05050a 60%, #030308);
+      overflow-x:hidden;
+    }
+
+    /* subtle “grain” */
+    .grain{
+      pointer-events:none;
+      position:fixed; inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+      mix-blend-mode:overlay;
+      opacity:.22;
+    }
+
+    .wrap{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:22px 16px;
+    }
+
+    .shell{
+      width:min(880px, 100%);
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:14px;
+    }
+
+    @media (max-width: 880px){
+      .shell{grid-template-columns:1fr}
+    }
+
+    .card{
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: var(--border);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
+
+    .card::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(600px 240px at 20% 0%, rgba(255,138,0,.35), transparent 60%),
+                  radial-gradient(540px 240px at 90% 30%, rgba(33,184,255,.30), transparent 55%);
+      filter: blur(14px);
+      opacity:.35;
+      z-index:0;
+    }
+
+    .card > *{position:relative; z-index:1}
+
+    .header{
+      padding:18px 18px 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(10,10,16,.88), rgba(10,10,16,.55));
+    }
+
+    .brand{
+      display:flex; align-items:flex-start; justify-content:space-between; gap:12px;
+    }
+
+    .logo{
+      line-height:1;
+    }
+    .logo .top{
+      font-size:42px;
+      font-weight:950;
+      letter-spacing: .5px;
+      text-transform: uppercase;
+      text-shadow: 0 0 18px rgba(255,138,0,.15);
+    }
+    .logo .top span{
+      background: linear-gradient(90deg, #ffffff, #f7f7ff 55%, rgba(255,255,255,.75));
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+    .logo .sub{
+      margin-top:6px;
+      font-size:13px;
+      color:var(--muted);
+      letter-spacing:.18em;
+      text-transform:uppercase;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.35);
+      font-weight:700;
+      font-size:12px;
+      color: rgba(255,255,255,.92);
+      white-space:nowrap;
+    }
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+      background: rgba(255,255,255,.35);
+      box-shadow: 0 0 16px rgba(255,255,255,.18);
+    }
+
+    .main{
+      padding:18px;
+      background: linear-gradient(180deg, rgba(10,10,16,.45), rgba(10,10,16,.15));
+    }
+
+    .quality{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      padding:14px 14px;
+      border-radius: 14px;
+      background:
+        radial-gradient(420px 160px at 15% 20%, rgba(33,184,255,.18), transparent 60%),
+        radial-gradient(420px 160px at 85% 30%, rgba(255,138,0,.18), transparent 60%),
+        rgba(0,0,0,.32);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+
+    .quality .qname{
+      font-size:22px;
+      font-weight:900;
+      letter-spacing:.4px;
+      text-transform:uppercase;
+    }
+    .pill{
+      padding:8px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.35);
+      color: rgba(255,255,255,.88);
+    }
+
+    .status{
+      margin-top:14px;
+      padding:16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.33);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .status .big{
+      font-size:34px;
+      font-weight:950;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+    }
+    .status .hint{
+      text-align:right;
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.35;
+      max-width: 260px;
+    }
+
+    .meta{
+      margin-top:14px;
+      padding:14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.26);
+      color: rgba(255,255,255,.88);
+      line-height:1.55;
+      font-size:14px;
+    }
+
+    .meta code{
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      padding:2px 7px;
+      border-radius:8px;
+      color:#fff;
+      font-weight:800;
+    }
+
+    /* Side panel */
+    .side{
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .sidebox{
+      border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.28);
+      padding:14px;
+    }
+
+    .sidebox h3{
+      margin:0 0 8px 0;
+      font-size:14px;
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      color: rgba(255,255,255,.90);
+    }
+
+    .sidebox p{
+      margin:0;
+      color: var(--muted);
+      font-size:13px;
+      line-height:1.55;
+    }
+
+    .footer{
+      margin-top:auto;
+      color: rgba(255,255,255,.35);
+      font-size:12px;
+      text-align:center;
+      padding-top:6px;
+    }
+
+    /* status colors */
+    .good{ color: var(--good); text-shadow: 0 0 16px rgba(70,255,154,.15); }
+    .bad { color: var(--bad);  text-shadow: 0 0 16px rgba(255,59,92,.12); }
+    .warn{ color: var(--orange2); text-shadow: 0 0 16px rgba(255,176,0,.12); }
+
+    /* dynamic accent ring */
+    .accent-ring{
+      position:absolute; inset:-1px;
+      border-radius: var(--radius);
+      pointer-events:none;
+      background: conic-gradient(from 180deg, rgba(255,138,0,.0), rgba(255,138,0,.30), rgba(33,184,255,.25), rgba(255,138,0,.0));
+      mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+      -webkit-mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
+      padding:1px;
+      opacity:.35;
+    }
   </style>
 </head>
+
 <body>
-  <h1>Authenticity Verification</h1>
-  <div class="card">
-    <div id="productTitle" class="title"></div>
-    <div id="status" class="big">Checking…</div>
-    <div id="meta" class="meta"></div>
+  <div class="grain"></div>
+
+  <div class="wrap">
+    <div class="shell">
+
+      <!-- MAIN CARD -->
+      <div class="card">
+        <div class="accent-ring"></div>
+
+        <div class="header">
+          <div class="brand">
+            <div class="logo">
+              <div class="top"><span>STREET</span> FARMZ</div>
+              <div class="sub">AUTHENTICITY CHECK</div>
+            </div>
+
+            <div class="badge">
+              <span class="dot" id="dot"></span>
+              <span id="badgeText">Scanning…</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="main">
+          <div class="quality">
+            <div>
+              <div class="qname" id="qualityName">Product</div>
+              <div style="margin-top:6px;color:var(--muted);font-size:13px;" id="qualityDesc">Verification in progress…</div>
+            </div>
+            <div class="pill" id="pill">QUALITY</div>
+          </div>
+
+          <div class="status">
+            <div class="big warn" id="statusText">CHECKING</div>
+            <div class="hint" id="statusHint">
+              Keep this page open.<br/>We are verifying the QR signature.
+            </div>
+          </div>
+
+          <div class="meta" id="meta">
+            Loading details…
+          </div>
+        </div>
+      </div>
+
+      <!-- SIDE PANEL -->
+      <div class="card">
+        <div class="accent-ring"></div>
+        <div class="side">
+          <div class="sidebox">
+            <h3>How it works</h3>
+            <p>
+              Each unit has a unique QR code containing a cryptographic signature.
+              If the signature is valid, the product is marked as <b>AUTHENTIC</b>.
+            </p>
+          </div>
+
+          <div class="sidebox">
+            <h3>Warning</h3>
+            <p>
+              If you see <b>FAKE</b> or the page looks modified, do not trust the product.
+              Take a screenshot and contact the seller.
+            </p>
+          </div>
+
+          <div class="sidebox">
+            <h3>Tip</h3>
+            <p>
+              If your phone opens a different domain than <b>supremossapos-ctrl.github.io</b>,
+              the QR may be cloned.
+            </p>
+          </div>
+
+          <div class="footer">© STREET FARMZ — Verification Page</div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
 <script>
@@ -52,28 +395,58 @@ function pemToArrayBuffer(pem){
   return bytes.buffer;
 }
 
+function setBadge(text, color){
+  document.getElementById("badgeText").textContent = text;
+  const dot = document.getElementById("dot");
+  dot.style.background = color;
+  dot.style.boxShadow = `0 0 16px ${color}55`;
+}
+
+function qualityTheme(quality){
+  const q = (quality || "").toLowerCase();
+
+  // Simple theme mapping (feel free to tweak)
+  if(q.includes("frozen")) return { pill:"FROZEN", desc:"Cold-cured selection", color:"#21b8ff" };
+  if(q.includes("drysift")) return { pill:"DRYSIFT", desc:"Dry sift refinement", color:"#d6d6e8" };
+  if(q.includes("static")) return { pill:"STATIC", desc:"Electro refined texture", color:"#0066ff" };
+  if(q.includes("terp")) return { pill:"TERP", desc:"Terp-focused reserve", color:"#ffb000" };
+  if(q.includes("crystal")) return { pill:"CRYSTAL", desc:"Crystal cured line", color:"#ff8a00" };
+
+  return { pill:"QUALITY", desc:"Signature-linked unit", color:"#ff8a00" };
+}
+
 async function run(){
-  // Your existing links use:
-  // c=code, s=signature, m=brand, p=product(we will use this as QUALITY), l=batch
+  // Same parameters you already use:
+  // c=code, s=signature, m=brand, p=quality, l=batch
   const code = q("c").trim();
   const brand = q("m").trim();
-  const quality = q("p").trim(); // <-- product title depends on quality
+  const quality = q("p").trim();
   const batch = q("l").trim();
   const sig = q("s").trim();
 
-  const statusEl = document.getElementById("status");
-  const metaEl = document.getElementById("meta");
-  const titleEl = document.getElementById("productTitle");
+  const statusText = document.getElementById("statusText");
+  const statusHint = document.getElementById("statusHint");
+  const meta = document.getElementById("meta");
+  const qualityName = document.getElementById("qualityName");
+  const qualityDesc = document.getElementById("qualityDesc");
+  const pill = document.getElementById("pill");
 
-  titleEl.textContent = quality ? quality : "Product";
+  const th = qualityTheme(quality);
+  qualityName.textContent = (quality || "Product").toUpperCase();
+  qualityDesc.textContent = th.desc;
+  pill.textContent = th.pill;
+
+  setBadge("Checking signature…", th.color);
 
   if(!code || !sig){
-    statusEl.textContent = "FAKE";
-    metaEl.textContent = "Incomplete link.";
+    statusText.textContent = "FAKE";
+    statusText.className = "big bad";
+    statusHint.innerHTML = "Missing parameters in the QR link.";
+    setBadge("Invalid QR link", "#ff3b5c");
+    meta.innerHTML = `This QR does not contain the required verification data.`;
     return;
   }
 
-  // Same signature message format you already use:
   const msg = `${code}|${brand}|${quality}|${batch}`;
 
   try{
@@ -93,19 +466,36 @@ async function run(){
     );
 
     if(ok){
-      statusEl.textContent = "AUTHENTIC";
-      metaEl.innerHTML =
+      statusText.textContent = "AUTHENTIC";
+      statusText.className = "big good";
+      statusHint.innerHTML = "Signature verified successfully.";
+      setBadge("Authentic", "#46ff9a");
+
+      meta.innerHTML =
         `Code: <code>${code}</code><br>` +
-        `Brand: ${brand}<br>` +
-        `Quality: ${quality}<br>` +
-        `Batch: ${batch}`;
+        `Brand: <b>${brand || "—"}</b><br>` +
+        `Quality: <b>${quality || "—"}</b><br>` +
+        `Batch: <b>${batch || "—"}</b>`;
     }else{
-      statusEl.textContent = "FAKE";
-      metaEl.textContent = "Invalid signature.";
+      statusText.textContent = "FAKE";
+      statusText.className = "big bad";
+      statusHint.innerHTML = "Signature mismatch.";
+      setBadge("Fake", "#ff3b5c");
+
+      meta.innerHTML =
+        `This QR signature is not valid.<br>` +
+        `Do not trust this product.`;
     }
+
   }catch(e){
-    statusEl.textContent = "ERROR";
-    metaEl.textContent = "Verification failed (public key not pasted correctly or unsupported browser).";
+    statusText.textContent = "ERROR";
+    statusText.className = "big warn";
+    statusHint.innerHTML = "Verification failed.";
+    setBadge("Error", "#ffb000");
+
+    meta.innerHTML =
+      `Your browser could not verify the signature.<br>` +
+      `Most common reason: the public key was not pasted correctly into verify.html.`;
   }
 }
 
@@ -113,3 +503,4 @@ run();
 </script>
 </body>
 </html>
+
