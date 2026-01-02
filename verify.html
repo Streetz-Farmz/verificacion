@@ -23,7 +23,7 @@
       --good:#46ff9a;
       --bad:#ff3b5c;
 
-      --accent:#ff8a00; /* will be updated per quality */
+      --accent:#ff8a00;
       --shadow: 0 18px 60px rgba(0,0,0,.65);
       --border: 1px solid rgba(255,138,0,.35);
       --radius: 18px;
@@ -43,7 +43,6 @@
       overflow-x:hidden;
     }
 
-    /* subtle “grain” */
     .grain{
       pointer-events:none;
       position:fixed; inset:0;
@@ -106,12 +105,12 @@
       line-height:1;
       display:flex;
       flex-direction:column;
-      gap:8px;
+      gap:10px;
     }
 
-    /* NEW: image logo/title (per quality) */
+    /* Top logo always */
     .logo img{
-      width: min(360px, 70vw);
+      width: min(360px, 72vw);
       height:auto;
       display:block;
       filter: drop-shadow(0 12px 26px rgba(0,0,0,.55));
@@ -163,12 +162,14 @@
       border: 1px solid rgba(255,255,255,.08);
     }
 
-    .quality .qname{
-      font-size:22px;
-      font-weight:900;
-      letter-spacing:.4px;
-      text-transform:uppercase;
+    /* Quality lettering image */
+    .q-lettering{
+      display:block;
+      width: min(420px, 70vw);
+      height:auto;
+      filter: drop-shadow(0 10px 20px rgba(0,0,0,.55));
     }
+
     .pill{
       padding:8px 10px;
       border-radius:999px;
@@ -179,6 +180,7 @@
       border: 1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.35);
       color: rgba(255,255,255,.88);
+      white-space:nowrap;
     }
 
     .status{
@@ -225,12 +227,10 @@
       border-radius:8px;
       color:#fff;
       font-weight:800;
-      /* keep code in one line */
       white-space:nowrap;
       word-break:keep-all;
     }
 
-    /* Side panel */
     .side{
       padding:18px;
       display:flex;
@@ -268,12 +268,10 @@
       padding-top:6px;
     }
 
-    /* status colors */
     .good{ color: var(--good); text-shadow: 0 0 16px rgba(70,255,154,.15); }
     .bad { color: var(--bad);  text-shadow: 0 0 16px rgba(255,59,92,.12); }
     .warn{ color: var(--orange2); text-shadow: 0 0 16px rgba(255,176,0,.12); }
 
-    /* dynamic accent ring */
     .accent-ring{
       position:absolute; inset:-1px;
       border-radius: var(--radius);
@@ -300,11 +298,10 @@
         <div class="header">
           <div class="brand">
             <div class="logo">
-              <!-- NEW: This image changes based on p=quality -->
-              <img id="qualityTitleImg"
+              <!-- ALWAYS the brand logo -->
+              <img id="brandTitleImg"
                    src="assets/qualities/STREETZFARM_LETTERING_BLANCO.png"
                    alt="STREETZ FARMZ">
-
               <div class="sub">AUTHENTICITY CHECK</div>
             </div>
 
@@ -318,8 +315,9 @@
         <div class="main">
           <div class="quality">
             <div>
-              <div class="qname" id="qualityName">Product</div>
-              <div style="margin-top:6px;color:var(--muted);font-size:13px;" id="qualityDesc">Verification in progress…</div>
+              <!-- Quality lettering image (replaces big text) -->
+              <img id="qualityLetteringImg" class="q-lettering" alt="Quality">
+              <div style="margin-top:10px;color:var(--muted);font-size:13px;" id="qualityDesc">Verification in progress…</div>
             </div>
             <div class="pill" id="pill">QUALITY</div>
           </div>
@@ -408,18 +406,13 @@ function setBadge(text, color){
   dot.style.boxShadow = `0 0 16px ${color}55`;
 }
 
-/* NEW: normalize quality to map PNGs reliably */
 function normQuality(s){
-  return (s || "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
+  return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-/* NEW: map quality -> PNG file */
-function qualityTitleImagePath(quality){
+/* Quality -> PNG lettering */
+function qualityLetteringPath(quality){
   const key = normQuality(quality);
-
   const MAP = {
     "drysift": "assets/qualities/LETTERING_STREETZFARMZ_DRYSIFT.png",
     "premium drysift": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_DRYSIFT.png",
@@ -437,27 +430,25 @@ function qualityTitleImagePath(quality){
   return MAP[key] || "assets/qualities/STREETZFARM_LETTERING_BLANCO.png";
 }
 
-/* Optional: quality theme mapping (your existing function, slightly improved) */
 function qualityTheme(quality){
-  const q = (quality || "").toLowerCase();
+  const qq = (quality || "").toLowerCase();
 
-  if(q.includes("premium") && q.includes("frozen")) return { pill:"PREMIUM FROZEN", desc:"Premium frozen selection", color:"#21b8ff" };
-  if(q.includes("frozen")) return { pill:"FROZEN", desc:"Cold-cured selection", color:"#21b8ff" };
+  if(qq.includes("premium") && qq.includes("frozen")) return { pill:"PREMIUM FROZEN", desc:"Premium frozen selection", color:"#21b8ff" };
+  if(qq.includes("frozen")) return { pill:"FROZEN", desc:"Cold-cured selection", color:"#21b8ff" };
 
-  if(q.includes("premium") && q.includes("drysift")) return { pill:"PREMIUM DRYSIFT", desc:"Premium dry sift refinement", color:"#d6d6e8" };
-  if(q.includes("drysift")) return { pill:"DRYSIFT", desc:"Dry sift refinement", color:"#d6d6e8" };
+  if(qq.includes("premium") && qq.includes("drysift")) return { pill:"PREMIUM DRYSIFT", desc:"Premium dry sift refinement", color:"#d6d6e8" };
+  if(qq.includes("drysift")) return { pill:"DRYSIFT", desc:"Dry sift refinement", color:"#d6d6e8" };
 
-  if(q.includes("premium") && q.includes("fresh") && q.includes("static")) return { pill:"PREMIUM FF STATIC", desc:"Premium fresh frozen static", color:"#00d1ff" };
-  if(q.includes("fresh") && q.includes("static")) return { pill:"FF STATIC", desc:"Fresh frozen static", color:"#00d1ff" };
+  if(qq.includes("premium") && qq.includes("fresh") && qq.includes("static")) return { pill:"PREMIUM FF STATIC", desc:"Premium fresh frozen static", color:"#00d1ff" };
+  if(qq.includes("fresh") && qq.includes("static")) return { pill:"FF STATIC", desc:"Fresh frozen static", color:"#00d1ff" };
 
-  if(q.includes("premium") && q.includes("static")) return { pill:"PREMIUM STATIC", desc:"Premium static refinement", color:"#0066ff" };
-  if(q.includes("static")) return { pill:"STATIC", desc:"Electro refined texture", color:"#0066ff" };
+  if(qq.includes("premium") && qq.includes("static")) return { pill:"PREMIUM STATIC", desc:"Premium static refinement", color:"#0066ff" };
+  if(qq.includes("static")) return { pill:"STATIC", desc:"Electro refined texture", color:"#0066ff" };
 
   return { pill:"QUALITY", desc:"Signature-linked unit", color:"#ff8a00" };
 }
 
 async function run(){
-  // c=code, s=signature, m=brand, p=quality, l=batch
   const code = q("c").trim();
   const brand = q("m").trim();
   const quality = q("p").trim();
@@ -467,22 +458,22 @@ async function run(){
   const statusText = document.getElementById("statusText");
   const statusHint = document.getElementById("statusHint");
   const meta = document.getElementById("meta");
-  const qualityName = document.getElementById("qualityName");
   const qualityDesc = document.getElementById("qualityDesc");
   const pill = document.getElementById("pill");
 
-  /* NEW: swap the top title image based on quality */
-  const titleImg = document.getElementById("qualityTitleImg");
-  if (titleImg) titleImg.src = qualityTitleImagePath(quality);
+  /* always keep brand logo on top */
+  const brandImg = document.getElementById("brandTitleImg");
+  if (brandImg) brandImg.src = "assets/qualities/STREETZFARM_LETTERING_BLANCO.png";
+
+  /* set the quality lettering inside the card */
+  const qImg = document.getElementById("qualityLetteringImg");
+  if (qImg) qImg.src = qualityLetteringPath(quality);
 
   const th = qualityTheme(quality);
-  qualityName.textContent = (quality || "Product").toUpperCase();
   qualityDesc.textContent = th.desc;
   pill.textContent = th.pill;
 
-  /* NEW: store accent color for visual consistency */
   document.documentElement.style.setProperty("--accent", th.color);
-
   setBadge("Checking signature…", th.color);
 
   if(!code || !sig){
@@ -528,7 +519,6 @@ async function run(){
       statusText.className = "big bad";
       statusHint.innerHTML = "Signature mismatch.";
       setBadge("Fake", "#ff3b5c");
-
       meta.innerHTML =
         `This QR signature is not valid.<br>` +
         `Do not trust this product.`;
@@ -539,7 +529,6 @@ async function run(){
     statusText.className = "big warn";
     statusHint.innerHTML = "Verification failed.";
     setBadge("Error", "#ffb000");
-
     meta.innerHTML =
       `Your browser could not verify the signature.<br>` +
       `Most common reason: the public key was not pasted correctly into verify.html.`;
@@ -550,4 +539,5 @@ run();
 </script>
 </body>
 </html>
+
 
