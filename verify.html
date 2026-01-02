@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>STREET FARMZ — Authenticity</title>
+  <title>STREETZ FARMZ — Authenticity</title>
   <meta name="theme-color" content="#0b0b0f"/>
 
   <style>
@@ -23,6 +23,7 @@
       --good:#46ff9a;
       --bad:#ff3b5c;
 
+      --accent:#ff8a00; /* will be updated per quality */
       --shadow: 0 18px 60px rgba(0,0,0,.65);
       --border: 1px solid rgba(255,138,0,.35);
       --radius: 18px;
@@ -103,22 +104,21 @@
 
     .logo{
       line-height:1;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
     }
-    .logo .top{
-      font-size:42px;
-      font-weight:950;
-      letter-spacing: .5px;
-      text-transform: uppercase;
-      text-shadow: 0 0 18px rgba(255,138,0,.15);
+
+    /* NEW: image logo/title (per quality) */
+    .logo img{
+      width: min(360px, 70vw);
+      height:auto;
+      display:block;
+      filter: drop-shadow(0 12px 26px rgba(0,0,0,.55));
     }
-    .logo .top span{
-      background: linear-gradient(90deg, #ffffff, #f7f7ff 55%, rgba(255,255,255,.75));
-      -webkit-background-clip:text;
-      background-clip:text;
-      color:transparent;
-    }
+
     .logo .sub{
-      margin-top:6px;
+      margin-top:2px;
       font-size:13px;
       color:var(--muted);
       letter-spacing:.18em;
@@ -225,6 +225,9 @@
       border-radius:8px;
       color:#fff;
       font-weight:800;
+      /* keep code in one line */
+      white-space:nowrap;
+      word-break:keep-all;
     }
 
     /* Side panel */
@@ -297,7 +300,11 @@
         <div class="header">
           <div class="brand">
             <div class="logo">
-              <div class="top"><span>STREET</span> FARMZ</div>
+              <!-- NEW: This image changes based on p=quality -->
+              <img id="qualityTitleImg"
+                   src="assets/qualities/STREETZFARM_LETTERING_BLANCO.png"
+                   alt="STREETZ FARMZ">
+
               <div class="sub">AUTHENTICITY CHECK</div>
             </div>
 
@@ -353,12 +360,12 @@
           <div class="sidebox">
             <h3>Tip</h3>
             <p>
-              If your phone opens a different domain than <b>supremossapos-ctrl.github.io</b>,
+              If your phone opens a different domain than <b>streetz-farmz.github.io</b>,
               the QR may be cloned.
             </p>
           </div>
 
-          <div class="footer">© STREET FARMZ — Verification Page</div>
+          <div class="footer">© STREETZ FARMZ — Verification Page</div>
         </div>
       </div>
 
@@ -366,7 +373,6 @@
   </div>
 
 <script>
-
 const PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAugMJ76e+l3g7DepjOdzE
 S0FKgnaWM7jlSsUfCjqNUz6qHxmurZfOiPreHywxy5jodZyR96ZZf631PqK6UUai
@@ -402,21 +408,55 @@ function setBadge(text, color){
   dot.style.boxShadow = `0 0 16px ${color}55`;
 }
 
+/* NEW: normalize quality to map PNGs reliably */
+function normQuality(s){
+  return (s || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/* NEW: map quality -> PNG file */
+function qualityTitleImagePath(quality){
+  const key = normQuality(quality);
+
+  const MAP = {
+    "drysift": "assets/qualities/LETTERING_STREETZFARMZ_DRYSIFT.png",
+    "premium drysift": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_DRYSIFT.png",
+
+    "frozen": "assets/qualities/LETTERING_STREETZFARMZ_FROZEN_.png",
+    "premium frozen": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_FROZEN_.png",
+
+    "static": "assets/qualities/LETTERING_STREETZFARMZ_STATIC.png",
+    "premium static": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_STATIC_.png",
+
+    "fresh frozen static": "assets/qualities/LETTERING_STREETZFARMZ_FFSTATIC.png",
+    "premium fresh frozen static": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_FFSTATIC.png"
+  };
+
+  return MAP[key] || "assets/qualities/STREETZFARM_LETTERING_BLANCO.png";
+}
+
+/* Optional: quality theme mapping (your existing function, slightly improved) */
 function qualityTheme(quality){
   const q = (quality || "").toLowerCase();
 
-  // Simple theme mapping (feel free to tweak)
+  if(q.includes("premium") && q.includes("frozen")) return { pill:"PREMIUM FROZEN", desc:"Premium frozen selection", color:"#21b8ff" };
   if(q.includes("frozen")) return { pill:"FROZEN", desc:"Cold-cured selection", color:"#21b8ff" };
+
+  if(q.includes("premium") && q.includes("drysift")) return { pill:"PREMIUM DRYSIFT", desc:"Premium dry sift refinement", color:"#d6d6e8" };
   if(q.includes("drysift")) return { pill:"DRYSIFT", desc:"Dry sift refinement", color:"#d6d6e8" };
+
+  if(q.includes("premium") && q.includes("fresh") && q.includes("static")) return { pill:"PREMIUM FF STATIC", desc:"Premium fresh frozen static", color:"#00d1ff" };
+  if(q.includes("fresh") && q.includes("static")) return { pill:"FF STATIC", desc:"Fresh frozen static", color:"#00d1ff" };
+
+  if(q.includes("premium") && q.includes("static")) return { pill:"PREMIUM STATIC", desc:"Premium static refinement", color:"#0066ff" };
   if(q.includes("static")) return { pill:"STATIC", desc:"Electro refined texture", color:"#0066ff" };
-  if(q.includes("terp")) return { pill:"TERP", desc:"Terp-focused reserve", color:"#ffb000" };
-  if(q.includes("crystal")) return { pill:"CRYSTAL", desc:"Crystal cured line", color:"#ff8a00" };
 
   return { pill:"QUALITY", desc:"Signature-linked unit", color:"#ff8a00" };
 }
 
 async function run(){
-  // Same parameters you already use:
   // c=code, s=signature, m=brand, p=quality, l=batch
   const code = q("c").trim();
   const brand = q("m").trim();
@@ -431,10 +471,17 @@ async function run(){
   const qualityDesc = document.getElementById("qualityDesc");
   const pill = document.getElementById("pill");
 
+  /* NEW: swap the top title image based on quality */
+  const titleImg = document.getElementById("qualityTitleImg");
+  if (titleImg) titleImg.src = qualityTitleImagePath(quality);
+
   const th = qualityTheme(quality);
   qualityName.textContent = (quality || "Product").toUpperCase();
   qualityDesc.textContent = th.desc;
   pill.textContent = th.pill;
+
+  /* NEW: store accent color for visual consistency */
+  document.documentElement.style.setProperty("--accent", th.color);
 
   setBadge("Checking signature…", th.color);
 
