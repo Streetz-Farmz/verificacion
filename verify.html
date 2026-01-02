@@ -43,6 +43,7 @@
       overflow-x:hidden;
     }
 
+    /* subtle grain */
     .grain{
       pointer-events:none;
       position:fixed; inset:0;
@@ -106,9 +107,10 @@
       display:flex;
       flex-direction:column;
       gap:10px;
+      min-width: 0;
     }
 
-    /* Top logo always */
+    /* Brand logo always */
     .logo img{
       width: min(360px, 72vw);
       height:auto;
@@ -125,28 +127,29 @@
     }
 
     .badge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:10px 12px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.35);
-  font-weight:700;
-  font-size:12px;
-  color: rgba(255,255,255,.92);
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.35);
+      font-weight:700;
+      font-size:12px;
+      color: rgba(255,255,255,.92);
+      white-space:nowrap;
 
-  
-  max-width: 46vw;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
-      
+      /* FIX: do not overflow in mobile */
+      max-width: 46vw;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
+
     .dot{
       width:10px;height:10px;border-radius:50%;
       background: rgba(255,255,255,.35);
       box-shadow: 0 0 16px rgba(255,255,255,.18);
+      flex: 0 0 auto;
     }
 
     .main{
@@ -168,12 +171,13 @@
       border: 1px solid rgba(255,255,255,.08);
     }
 
-    /* Quality lettering image */
+    /* Quality lettering image replaces big text */
     .q-lettering{
       display:block;
       width: min(420px, 70vw);
       height:auto;
       filter: drop-shadow(0 10px 20px rgba(0,0,0,.55));
+      max-width: 100%;
     }
 
     .pill{
@@ -187,6 +191,10 @@
       background: rgba(0,0,0,.35);
       color: rgba(255,255,255,.88);
       white-space:nowrap;
+      flex: 0 0 auto;
+      max-width: 100%;
+      overflow:hidden;
+      text-overflow:ellipsis;
     }
 
     .status{
@@ -207,6 +215,7 @@
       letter-spacing:.5px;
       text-transform:uppercase;
     }
+
     .status .hint{
       text-align:right;
       color:var(--muted);
@@ -224,6 +233,9 @@
       color: rgba(255,255,255,.88);
       line-height:1.55;
       font-size:14px;
+
+      /* FIX: never break code line; allow horizontal scroll if needed */
+      overflow-x:auto;
     }
 
     .meta code{
@@ -237,6 +249,7 @@
       word-break:keep-all;
     }
 
+    /* Side panel */
     .side{
       padding:18px;
       display:flex;
@@ -274,10 +287,12 @@
       padding-top:6px;
     }
 
+    /* status colors */
     .good{ color: var(--good); text-shadow: 0 0 16px rgba(70,255,154,.15); }
     .bad { color: var(--bad);  text-shadow: 0 0 16px rgba(255,59,92,.12); }
     .warn{ color: var(--orange2); text-shadow: 0 0 16px rgba(255,176,0,.12); }
 
+    /* dynamic accent ring */
     .accent-ring{
       position:absolute; inset:-1px;
       border-radius: var(--radius);
@@ -289,34 +304,36 @@
       opacity:.35;
     }
 
+    /* MOBILE FIXES so nothing gets cut */
     @media (max-width: 520px){
-  .brand{
-    align-items:flex-start;
-  }
+      .logo img{
+        width: min(280px, 76vw);
+      }
 
-  .badge{
-    max-width: 44vw;
-  }
+      .badge{
+        max-width: 44vw;
+      }
 
-  .quality{
-    flex-direction:column;
-    align-items:flex-start;
-  }
+      .quality{
+        flex-direction:column;
+        align-items:flex-start;
+      }
 
-  .pill{
-    align-self:flex-end;
-    max-width: 92%;
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-  }
+      .pill{
+        align-self:flex-end;
+        max-width: 92%;
+      }
 
-@media (max-width: 520px){
-  .logo img{
-    width: min(280px, 76vw);
-  }
+      .status{
+        flex-direction:column;
+        align-items:flex-start;
+      }
 
-
+      .status .hint{
+        text-align:left;
+        max-width: none;
+      }
+    }
   </style>
 </head>
 
@@ -333,7 +350,7 @@
         <div class="header">
           <div class="brand">
             <div class="logo">
-              <!-- ALWAYS the brand logo -->
+              <!-- ALWAYS brand logo -->
               <img id="brandTitleImg"
                    src="assets/qualities/STREETZFARM_LETTERING_BLANCO.png"
                    alt="STREETZ FARMZ">
@@ -349,8 +366,8 @@
 
         <div class="main">
           <div class="quality">
-            <div>
-              <!-- Quality lettering image (replaces big text) -->
+            <div style="min-width:0;">
+              <!-- Quality lettering image -->
               <img id="qualityLetteringImg" class="q-lettering" alt="Quality">
               <div style="margin-top:10px;color:var(--muted);font-size:13px;" id="qualityDesc">Verification in progress…</div>
             </div>
@@ -496,11 +513,11 @@ async function run(){
   const qualityDesc = document.getElementById("qualityDesc");
   const pill = document.getElementById("pill");
 
-  /* always keep brand logo on top */
+  /* Always keep brand logo on top */
   const brandImg = document.getElementById("brandTitleImg");
   if (brandImg) brandImg.src = "assets/qualities/STREETZFARM_LETTERING_BLANCO.png";
 
-  /* set the quality lettering inside the card */
+  /* Set the quality lettering inside the card */
   const qImg = document.getElementById("qualityLetteringImg");
   if (qImg) qImg.src = qualityLetteringPath(quality);
 
