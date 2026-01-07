@@ -1,170 +1,185 @@
-<!DOCTYPE html>
+[2:44, 7/1/2026] £: <!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Streetz Farmz – Verification</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>STREETZ FARMZ — Authenticity</title>
+  <meta name="theme-color" content="#0b0b0f"/>
 
-<style>
-body{
-  margin:0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: radial-gradient(circle at top, #1c1c1c, #0b0b0b);
-  color:#fff;
-}
+  <style>
+    :root{
+      --bg:#07070a;
+      --panel:#0c0c12;
+      --text:#f4f4ff;
+      --muted:#b9b9d0;
 
-.container{
-  max-width:420px;
-  margin:20px auto;
-  padding:16px;
-  border-radius:20px;
-  border:1px solid rgba(255,180,80,.35);
-}
+      --orange:#ff8a00;
+      --orange2:#ffb000;
 
-.header img{
-  width:100%;
-  max-height:140px;
-  object-fit:contain;
-  margin-bottom:10px;
-}
+      --blue:#21b8ff;
+      --blue2:#0066ff;
 
-.badge{
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:8px 14px;
-  border-radius:999px;
-  background:#111;
-  border:1px solid #222;
-}
+      --good:#46ff9a;
+      --bad:#ff3b5c;
 
-.dot{
-  width:10px;height:10px;border-radius:50%;
-  background:#4cff7a;
-}
+      --shadow: 0 18px 60px rgba(0,0,0,.65);
+      --border: 1px solid rgba(255,138,0,.35);
+      --radius: 18px;
+    }
 
-.card{
-  margin-top:16px;
-  padding:16px;
-  border-radius:16px;
-  background:linear-gradient(135deg,#182026,#201a12);
-  border:1px solid #2a2a2a;
-}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;…
+[2:55, 7/1/2026] £: <!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>STREETZ FARMZ — Authenticity</title>
+  <meta name="theme-color" content="#0b0b0f"/>
 
-.quality-img{
-  width:100%;
-  max-height:120px;
-  object-fit:contain;
-  display:block;
-  margin-bottom:8px;
-}
+  <style>
+    :root{
+      --bg:#07070a;
+      --text:#f4f4ff;
+      --muted:#b9b9d0;
 
-.label{
-  opacity:.7;
-  font-size:14px;
-}
+      --orange:#ff8a00;
+      --orange2:#ffb000;
 
-.tag{
-  display:inline-block;
-  margin-top:10px;
-  padding:8px 14px;
-  border-radius:999px;
-  background:#111;
-  border:1px solid #333;
-  font-weight:600;
-}
+      --good:#46ff9a;
+      --bad:#ff3b5c;
 
-.status{
-  margin-top:14px;
-  padding:14px;
-  border-radius:14px;
-  background:#0e1a12;
-  color:#4cff7a;
-  font-size:28px;
-  font-weight:800;
-  letter-spacing:.05em;
-}
+      --shadow: 0 18px 60px rgba(0,0,0,.65);
+      --border: 1px solid rgba(255,138,0,.35);
+      --radius: 18px;
+    }
 
-.details{
-  margin-top:14px;
-  padding:14px;
-  border-radius:14px;
-  background:#0f0f0f;
-  border:1px solid #222;
-  font-size:14px;
-}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      color:var(--text);
+      background:
+        radial-gradient(1000px 600px at 20% 10%, rgba(33,184,255,.10), transparent 60%),
+        radial-gradient(900px 500px at 80% 30%, rgba(255,138,0,.10), transparent 65%),
+        radial-gradient(700px 400px at 50% 95%, rgba(0,102,255,.10), transparent 55%),
+        linear-gradient(180deg, var(--bg), #05050a 60%, #030308);
+      overflow-x:hidden;
+    }
 
-.details b{color:#fff}
-</style>
-</head>
+    .grain{
+      pointer-events:none;
+      position:fixed; inset:0;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
+      mix-blend-mode:overlay;
+      opacity:.22;
+    }
 
-<body>
-<div class="container">
+    .wrap{
+      min-height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px 14px;
+    }
 
-  <!-- LOGO -->
-  <div class="header">
-    <img src="assets/qualities/STREETZFARM_LETTERING_BLANCO.png"
-         onerror="this.style.display='none'">
-  </div>
+    .shell{
+      width:min(880px, 100%);
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap:14px;
+    }
 
-  <div class="badge">
-    <div class="dot"></div>
-    Authentic
-  </div>
+    @media (max-width: 880px){
+      .shell{grid-template-columns:1fr}
+    }
 
-  <!-- QUALITY CARD -->
-  <div class="card">
-    <img id="qualityImage" class="quality-img" src="" alt="">
-    <div class="label">Premium frozen selection</div>
-    <div id="qualityTag" class="tag"></div>
-  </div>
+    .card{
+      border-radius: var(--radius);
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border: var(--border);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position:relative;
+    }
 
-  <!-- STATUS -->
-  <div class="status">AUTHENTIC</div>
+    .card::before{
+      content:"";
+      position:absolute; inset:-2px;
+      background: radial-gradient(600px 240px at 20% 0%, rgba(255,138,0,.35), transparent 60%),
+                  radial-gradient(540px 240px at 90% 30%, rgba(33,184,255,.30), transparent 55%);
+      filter: blur(14px);
+      opacity:.35;
+      z-index:0;
+    }
 
-  <!-- DETAILS -->
-  <div class="details">
-    Code: <b id="code"></b><br>
-    Brand: <b>STREETZ FARMZ</b><br>
-    Quality: <b id="qualityText"></b><br>
-    Batch: <b id="batch"></b>
-  </div>
+    .card > *{position:relative; z-index:1}
 
-</div>
+    .header{
+      padding:14px 16px 10px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+      background: linear-gradient(180deg, rgba(10,10,16,.88), rgba(10,10,16,.55));
+    }
 
-<script>
-/* 👉 SIMULACIÓN (luego vendrá del QR real) */
-const data = {
-  code: "4Y2J-J355-EKRJ-76M6",
-  quality: "Premium Frozen",
-  batch: "SF-PREMIUM-FROZEN-001"
-};
+    .brand{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
 
-/* MAPA EXACTO DE CALIDADES A PNG */
-const qualityImages = {
-  "Frozen": "LETTERING_STREETZFARMZ_FROZEN_.png",
-  "Premium Frozen": "LETTERING_STREETZFARMZ_PREMIUM_FROZEN.png",
-  "Static": "LETTERING_STREETZFARMZ_STATIC.png",
-  "Premium Static": "LETTERING_STREETZFARMZ_PREMIUM_STATIC.png",
-  "Dry Sift": "LETTERING_STREETZFARMZ_DRYSIFT.png",
-  "Premium Dry Sift": "LETTERING_STREETZFARMZ_PREMIUM_DRYSIFT.png"
-};
+    .logo{
+      line-height:1;
+      display:flex;
+      flex-direction:column;
+      gap:6px;
+      min-width:0;
+    }
 
-/* PINTAR DATOS */
-document.getElementById("code").textContent = data.code;
-document.getElementById("qualityText").textContent = data.quality;
-document.getElementById("batch").textContent = data.batch;
-document.getElementById("qualityTag").textContent = data.quality.toUpperCase();
+    .logo img{
+      width:min(340px, 78vw);
+      height:auto;
+      display:block;
+      margin:0;
+      filter: drop-shadow(0 12px 26px rgba(0,0,0,.55));
+    }
 
-/* PINTAR PNG */
-const img = document.getElementById("qualityImage");
-const file = qualityImages[data.quality];
+    .logoFallback{
+      font-weight:950;
+      letter-spacing:.5px;
+      text-transform:uppercase;
+      font-size:36px;
+      margin:0;
+    }
 
-if(file){
-  img.src = "assets/qualities/" + file;
-}else{
-  img.style.display = "none";
-}
-</script>
-</body>
-</html>
+    .logo .sub{
+      margin:0;
+      padding-top:2px;
+      font-size:12px;
+      color:var(--muted);
+      letter-spacing:.18em;
+      text-transform:uppercase;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:9px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.35);
+      font-weight:700;
+      font-size:12px;
+      color: rgba(255,255,255,.92);
+      white-space:nowrap;
+    }
+
+    .dot{
+      width:10px;height:10px;border-radius:50%;
+…
+[2:57, 7/1/2026] £: 
