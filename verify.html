@@ -104,14 +104,12 @@
       flex-direction:column;
       gap:6px;
       min-width:0;
-
-      /* ✅ left alignment */
       align-items:flex-start;
       text-align:left;
     }
 
     .logo img{
-      display:none;                 /* hidden until loaded */
+      display:none;
       width: min(300px, 72vw);
       height:auto;
       filter: drop-shadow(0 12px 26px rgba(0,0,0,.55));
@@ -127,8 +125,6 @@
       line-height:1;
       color:#fff;
       text-shadow: 0 0 18px rgba(255,138,0,.15);
-
-      /* ✅ left */
       text-align:left;
     }
 
@@ -139,8 +135,6 @@
       color:var(--muted);
       letter-spacing:.18em;
       text-transform:uppercase;
-
-      /* ✅ left */
       text-align:left;
     }
 
@@ -186,7 +180,6 @@
       min-width:0;
     }
 
-    /* ✅ quality block left */
     .qwrap{
       min-width:0;
       display:flex;
@@ -202,8 +195,6 @@
       max-width:100%;
       margin:0;
       filter: drop-shadow(0 10px 20px rgba(0,0,0,.55));
-
-      /* ✅ left */
       align-self:flex-start;
     }
 
@@ -212,8 +203,6 @@
       color:var(--muted);
       font-size:13px;
       line-height:1.25;
-
-      /* ✅ left */
       text-align:left;
     }
 
@@ -458,7 +447,10 @@ rfBeLL6n3Bdr3UKwmBL5S7xE/W33A9JW5gt3+no2waQFsTwDahorjLIzJ4nHsSeV
 8wIDAQAB
 -----END PUBLIC KEY-----`;
 
-const CACHE_BUST = "v=9";
+// Cambia el número cuando subas nuevos assets para forzar recarga
+const CACHE_BUST = "v=10";
+
+// ✅ Este archivo en tu repo es .png (minúsculas)
 const BRAND_LOGO_PATH = "assets/qualities/STREETZFARM_LETTERING_BLANCO.png";
 
 function q(name){ return new URL(location.href).searchParams.get(name) || ""; }
@@ -497,19 +489,22 @@ function withCacheBust(url){
 
 function qualityLetteringPath(quality){
   const key = normQuality(quality);
+
+  // ✅ NOMBRES EXACTOS según tu carpeta (case-sensitive)
   const MAP = {
-    "drysift": "assets/qualities/LETTERING_STREETZFARMZ_DRYSIFT.png",
-    "premium drysift": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_DRYSIFT.png",
+    "drysift": "assets/qualities/LETTERING_STREETZFARMZ_DRYSIFT.PNG",
+    "premium drysift": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_DRYSIFT.PNG",
 
-    "frozen": "assets/qualities/LETTERING_STREETZFARMZ_FROZEN_.png",
-    "premium frozen": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_FROZEN.png",
+    "frozen": "assets/qualities/LETTERING_STREETZFARMZ_FROZEN.PNG",
+    "premium frozen": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_FROZEN.PNG",
 
-    "static": "assets/qualities/LETTERING_STREETZFARMZ_STATIC.png",
-    "premium static": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_STATIC_.png",
+    "static": "assets/qualities/LETTERING_STREETZFARMZ_STATIC.PNG",
+    "premium static": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_STATIC_.PNG",
 
-    "fresh frozen static": "assets/qualities/LETTERING_STREETZFARMZ_FFSTATIC.png",
-    "premium fresh frozen static": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_FFSTATIC.png"
+    "fresh frozen static": "assets/qualities/LETTERING_STREETZFARMZ_FFSTATIC.PNG",
+    "premium fresh frozen static": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_FFSTATIC.PNG"
   };
+
   return MAP[key] || BRAND_LOGO_PATH;
 }
 
@@ -564,7 +559,11 @@ async function run(){
   const pill = document.getElementById("pill");
 
   const qImg = document.getElementById("qualityLetteringImg");
-  if (qImg) qImg.src = withCacheBust(qualityLetteringPath(quality));
+  if (qImg){
+    qImg.src = withCacheBust(qualityLetteringPath(quality));
+    // ✅ Si falta el archivo (por typo/ruta), ponemos el logo blanco
+    qImg.onerror = () => { qImg.src = withCacheBust(BRAND_LOGO_PATH); };
+  }
 
   const th = qualityTheme(quality);
   qualityDesc.textContent = th.desc;
@@ -637,3 +636,4 @@ run();
 </script>
 </body>
 </html>
+
