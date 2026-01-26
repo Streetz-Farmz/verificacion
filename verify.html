@@ -29,11 +29,15 @@
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       color:var(--text);
+
+      /* ✅ Fondo general desde imagen (ahora en assets/qualities) + overlays para legibilidad */
       background:
         radial-gradient(1000px 600px at 20% 10%, rgba(33,184,255,.10), transparent 60%),
         radial-gradient(900px 500px at 80% 30%, rgba(255,138,0,.10), transparent 65%),
         radial-gradient(700px 400px at 50% 95%, rgba(0,102,255,.10), transparent 55%),
-        linear-gradient(180deg, var(--bg), #05050a 60%, #030308);
+        linear-gradient(180deg, rgba(7,7,10,.82), rgba(5,5,10,.86) 60%, rgba(3,3,8,.92)),
+        url("assets/qualities/SF_WEB_FONDO.JPG") center/cover no-repeat fixed;
+
       overflow-x:hidden;
     }
 
@@ -165,20 +169,58 @@
       background: linear-gradient(180deg, rgba(10,10,16,.45), rgba(10,10,16,.15));
     }
 
+    /* ✅ Recuadro rojo (QUALITY) con fondo dinámico según QR */
     .quality{
+      --quality-bg: none; /* JS setea esto a url(...) */
+      position:relative;
+      overflow:hidden;
+
       display:flex;
       align-items:flex-end;
       justify-content:space-between;
       gap:10px;
       padding:12px 12px;
       border-radius: 14px;
-      background:
-        radial-gradient(420px 160px at 15% 20%, rgba(33,184,255,.18), transparent 60%),
-        radial-gradient(420px 160px at 85% 30%, rgba(255,138,0,.18), transparent 60%),
-        rgba(0,0,0,.32);
+
+      /* Base oscura para legibilidad (el fondo real está en ::before) */
+      background: rgba(0,0,0,.32);
       border: 1px solid rgba(255,255,255,.08);
       min-width:0;
     }
+
+    .quality::before{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:0;
+
+      /* ✅ Imagen específica por calidad */
+      background-image: var(--quality-bg);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+
+      /* Ajustes de legibilidad */
+      filter: saturate(1.05) contrast(1.05);
+      opacity:.65;
+      transform: scale(1.02);
+    }
+
+    .quality::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      z-index:0;
+
+      /* overlays para mantener el estilo y que el texto se lea bien */
+      background:
+        radial-gradient(420px 160px at 15% 20%, rgba(33,184,255,.18), transparent 60%),
+        radial-gradient(420px 160px at 85% 30%, rgba(255,138,0,.18), transparent 60%),
+        linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55));
+      opacity:1;
+    }
+
+    .quality > *{ position:relative; z-index:1; }
 
     .qwrap{
       min-width:0;
@@ -380,7 +422,7 @@
         </div>
 
         <div class="main">
-          <div class="quality">
+          <div class="quality" id="qualityBox">
             <div class="qwrap">
               <img id="qualityLetteringImg" class="q-lettering" alt="Quality lettering">
               <div id="qualityDesc">Verification in progress…</div>
@@ -448,10 +490,19 @@ rfBeLL6n3Bdr3UKwmBL5S7xE/W33A9JW5gt3+no2waQFsTwDahorjLIzJ4nHsSeV
 -----END PUBLIC KEY-----`;
 
 // Cambia el número cuando subas nuevos assets para forzar recarga
-const CACHE_BUST = "v=10";
+const CACHE_BUST = "v=12";
 
 // ✅ Este archivo en tu repo es .png (minúsculas)
 const BRAND_LOGO_PATH = "assets/qualities/STREETZFARM_LETTERING_BLANCO.png";
+
+/* ✅ Fondos: ahora TODOS en assets/qualities */
+const WEB_BG_PATH = "assets/qualities/SF_WEB_FONDO.JPG";
+const QUALITY_BG = {
+  frozen:  "assets/qualities/SF_FROZEN_FONDO.JPG",
+  static:  "assets/qualities/SF_STATIC_FONDO.JPG",
+  ffstatic:"assets/qualities/SF_FFSTATIC_FONDO.JPG",
+  drysift: "assets/qualities/SF_DRY_FONDO.JPG"
+};
 
 function q(name){ return new URL(location.href).searchParams.get(name) || ""; }
 
@@ -508,6 +559,21 @@ function qualityLetteringPath(quality){
   return MAP[key] || BRAND_LOGO_PATH;
 }
 
+/* ✅ Devuelve qué fondo usar en el recuadro según la calidad del QR */
+function qualityBackgroundPath(quality){
+  const qq = (quality || "").toLowerCase();
+
+  // FF STATIC primero (para que no lo capture "static" antes)
+  if(qq.includes("fresh") && qq.includes("static")) return QUALITY_BG.ffstatic;
+
+  if(qq.includes("frozen")) return QUALITY_BG.frozen;
+  if(qq.includes("drysift")) return QUALITY_BG.drysift;
+  if(qq.includes("static")) return QUALITY_BG.static;
+
+  // default: si viene algo raro, deja sin imagen (solo oscuro)
+  return "";
+}
+
 function qualityTheme(quality){
   const qq = (quality || "").toLowerCase();
 
@@ -558,10 +624,21 @@ async function run(){
   const qualityDesc = document.getElementById("qualityDesc");
   const pill = document.getElementById("pill");
 
+  // ✅ Fondo del recuadro según calidad
+  const qualityBox = document.getElementById("qualityBox");
+  const bg = qualityBackgroundPath(quality);
+  if (qualityBox){
+    if (bg){
+      qualityBox.style.setProperty("--quality-bg", `url("${withCacheBust(bg)}")`);
+    } else {
+      qualityBox.style.setProperty("--quality-bg", "none");
+    }
+  }
+
+  // ✅ Lettering por calidad
   const qImg = document.getElementById("qualityLetteringImg");
   if (qImg){
     qImg.src = withCacheBust(qualityLetteringPath(quality));
-    // ✅ Si falta el archivo (por typo/ruta), ponemos el logo blanco
     qImg.onerror = () => { qImg.src = withCacheBust(BRAND_LOGO_PATH); };
   }
 
@@ -636,4 +713,3 @@ run();
 </script>
 </body>
 </html>
-
