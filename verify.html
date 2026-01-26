@@ -475,6 +475,10 @@
 /** ✅ Cloudflare Worker endpoint (one-time scan) */
 const API_SCAN_URL = "https://streetzfarmz-qr.streetzfarmz.workers.dev/scan";
 
+// Anti doble llamada por carga / recargas raras
+let scanRequestInFlight = false;
+let scanDoneForThisPage = false;
+
 const PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAugMJ76e+l3g7DepjOdzE
 S0FKgnaWM7jlSsUfCjqNUz6qHxmurZfOiPreHywxy5jodZyR96ZZf631PqK6UUai
@@ -609,15 +613,25 @@ async function recordScan({ code, brand, quality, batch, sig }) {
     body: JSON.stringify(payload),
   });
 
-  // Si el backend cayera o respondiera mal, esto lanza y lo capturamos arriba
-  return await r.json();
+  // Lee siempre texto para debug robusto
+  const text = await r.text().catch(() => "");
+
+  if (!r.ok) {
+    throw new Error(`API ${r.status}: ${text.slice(0, 200)}`);
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`API returned non-JSON: ${text.slice(0, 200)}`);
+  }
 }
 
 async function run(){
   setupBrandLogo();
 
   const code = q("c").trim();
-  const brand = q("m").trim().replace(/\+/g, " "); // por si viene como STREETZ+FARMZ
+  const brand = q("m").trim().replace(/\+/g, " ");
   const quality = q("p").trim().replace(/\+/g, " ");
   const batch = q("l").trim().replace(/\+/g, " ");
   const sig = q("s").trim();
@@ -635,7 +649,7 @@ async function run(){
     qualityBox.style.setProperty("--quality-bg", `url("${withCacheBust(bg)}")`);
   }
 
-  // ✅ Lettering (esto es lo ÚNICO visible dentro del recuadro)
+  // ✅ Lettering
   const qImg = document.getElementById("qualityLetteringImg");
   if (qImg){
     qImg.src = withCacheBust(qualityLetteringPath(quality));
@@ -679,62 +693,85 @@ async function run(){
       statusHint.innerHTML = "Signature verified successfully.";
       setBadge("Authentic", "#46ff9a");
 
-      // mostramos meta base
       meta.innerHTML =
         `Code: <code>${code}</code><br>` +
         `Brand: <b>${brand || "—"}</b><br>` +
         `Quality: <b>${quality || "—"}</b><br>` +
         `Batch: <b>${batch || "—"}</b>`;
 
-      // ✅ Ahora registramos el uso / detectamos repetición
-      try {
-        setBadge("Recording scan…", th.color);
+      // ✅ Registrar scan con anti doble llamada
+      if (!scanDoneForThisPage && !scanRequestInFlight) {
+        scanRequestInFlight = true;
 
-        const data = await recordScan({ code, brand, quality, batch, sig });
+        const scanKey = `scan:${code}|${brand}|${quality}|${batch}`;
+        const last = Number(localStorage.getItem(scanKey) || "0");
 
-        if (data && data.auth === true) {
-          if (data.scan === "FIRST") {
-            // ✅ Primera vez
-            statusHint.innerHTML = "Signature verified successfully.<br><b>First verification</b> ✅";
-            setBadge("First scan", "#46ff9a");
-
-            meta.innerHTML +=
-              `<br><br>Scan status: <b class="good">FIRST</b> ✅` +
-              `<br>Verified at: <b>${data.first_seen_at || "—"}</b>`;
-          } else if (data.scan === "REPEAT") {
-            // ⚠️ Ya usado
-            statusText.textContent = "AUTHENTIC";
-            statusText.className = "big warn";
-            statusHint.innerHTML =
-              `Signature verified successfully.<br><b>Already verified</b> ⚠️<br>` +
-              `First scan: <b>${data.first_seen_at || "—"}</b>`;
-
-            setBadge("Already used", "#ffb000");
-
-            meta.innerHTML +=
-              `<br><br>Scan status: <b class="warn">REPEAT</b> ⚠️` +
-              `<br>First scan: <b>${data.first_seen_at || "—"}</b>`;
-          } else {
-            // fallback
-            setBadge("Verified", "#46ff9a");
-          }
+        if (Date.now() - last < 15000) {
+          scanRequestInFlight = false;
         } else {
-          // Si el server por algún motivo dice auth false
-          statusText.textContent = "FAKE";
-          statusText.className = "big bad";
-          statusHint.innerHTML = "Server verification failed.";
-          setBadge("Fake (server)", "#ff3b5c");
+          localStorage.setItem(scanKey, String(Date.now()));
 
-          meta.innerHTML += `<br><br><b class="bad">Server rejected this code.</b>`;
+          try {
+            setBadge("Recording scan…", th.color);
+
+            const data = await recordScan({ code, brand, quality, batch, sig });
+
+            scanDoneForThisPage = true;
+
+            if (data && data.auth === true) {
+              if (data.scan === "FIRST") {
+                statusHint.innerHTML = "Signature verified successfully.<br><b>First verification</b> ✅";
+                setBadge("First scan", "#46ff9a");
+
+                meta.innerHTML +=
+                  `<br><br>Scan status: <b class="good">FIRST</b> ✅` +
+                  `<br>Verified at: <b>${data.first_seen_at || "—"}</b>`;
+              } else if (data.scan === "REPEAT") {
+                const first = data.first_seen_at ? Date.parse(data.first_seen_at) : null;
+                const now = Date.now();
+                const seconds = first ? (now - first) / 1000 : null;
+
+                if (seconds !== null && seconds < 20) {
+                  statusHint.innerHTML = "Signature verified successfully.<br><b>First verification</b> ✅";
+                  setBadge("First scan", "#46ff9a");
+
+                  meta.innerHTML +=
+                    `<br><br>Scan status: <b class="good">FIRST</b> ✅` +
+                    `<br>Verified at: <b>${data.first_seen_at || "—"}</b>`;
+                } else {
+                  statusText.textContent = "AUTHENTIC";
+                  statusText.className = "big warn";
+                  statusHint.innerHTML =
+                    `Signature verified successfully.<br><b>Already verified</b> ⚠️<br>` +
+                    `First scan: <b>${data.first_seen_at || "—"}</b>`;
+
+                  setBadge("Already used", "#ffb000");
+
+                  meta.innerHTML +=
+                    `<br><br>Scan status: <b class="warn">REPEAT</b> ⚠️` +
+                    `<br>First scan: <b>${data.first_seen_at || "—"}</b>`;
+                }
+              } else {
+                setBadge("Verified", "#46ff9a");
+              }
+            } else {
+              statusText.textContent = "FAKE";
+              statusText.className = "big bad";
+              statusHint.innerHTML = "Server verification failed.";
+              setBadge("Fake (server)", "#ff3b5c");
+              meta.innerHTML += `<br><br><b class="bad">Server rejected this code.</b>`;
+            }
+          } catch (e) {
+            console.error("recordScan failed:", e);
+            statusHint.innerHTML =
+              `Signature verified successfully.<br>` +
+              `<b>Offline:</b> could not record scan (network/backend).`;
+            setBadge("Verified (offline)", "#ffb000");
+            meta.innerHTML += `<br><br>Scan status: <b class="warn">OFFLINE</b> (could not record)`;
+          } finally {
+            scanRequestInFlight = false;
+          }
         }
-      } catch (e) {
-        // Backend caído o sin internet: seguimos mostrando autenticidad local
-        statusHint.innerHTML =
-          `Signature verified successfully.<br>` +
-          `<b>Offline:</b> could not record scan (network/backend).`;
-        setBadge("Verified (offline)", "#ffb000");
-
-        meta.innerHTML += `<br><br>Scan status: <b class="warn">OFFLINE</b> (could not record)`;
       }
 
     }else{
