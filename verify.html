@@ -472,6 +472,9 @@
   </div>
 
 <script>
+/** ✅ Cloudflare Worker endpoint (one-time scan) */
+const API_SCAN_URL = "https://streetzfarmz-qr.streetzfarmz.workers.dev/scan";
+
 const PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAugMJ76e+l3g7DepjOdzE
 S0FKgnaWM7jlSsUfCjqNUz6qHxmurZfOiPreHywxy5jodZyR96ZZf631PqK6UUai
@@ -596,13 +599,27 @@ function qualityTheme(quality){
   return { color:"#ff8a00" };
 }
 
+/** ✅ Llama al backend para registrar 1er escaneo / detectar repetido */
+async function recordScan({ code, brand, quality, batch, sig }) {
+  const payload = { c: code, m: brand, p: quality, l: batch, s: sig };
+
+  const r = await fetch(API_SCAN_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  // Si el backend cayera o respondiera mal, esto lanza y lo capturamos arriba
+  return await r.json();
+}
+
 async function run(){
   setupBrandLogo();
 
   const code = q("c").trim();
-  const brand = q("m").trim();
-  const quality = q("p").trim();
-  const batch = q("l").trim();
+  const brand = q("m").trim().replace(/\+/g, " "); // por si viene como STREETZ+FARMZ
+  const quality = q("p").trim().replace(/\+/g, " ");
+  const batch = q("l").trim().replace(/\+/g, " ");
   const sig = q("s").trim();
 
   const statusText = document.getElementById("statusText");
@@ -656,16 +673,70 @@ async function run(){
     );
 
     if(ok){
+      // ✅ Verificación local OK
       statusText.textContent = "AUTHENTIC";
       statusText.className = "big good";
       statusHint.innerHTML = "Signature verified successfully.";
       setBadge("Authentic", "#46ff9a");
 
+      // mostramos meta base
       meta.innerHTML =
         `Code: <code>${code}</code><br>` +
         `Brand: <b>${brand || "—"}</b><br>` +
         `Quality: <b>${quality || "—"}</b><br>` +
         `Batch: <b>${batch || "—"}</b>`;
+
+      // ✅ Ahora registramos el uso / detectamos repetición
+      try {
+        setBadge("Recording scan…", th.color);
+
+        const data = await recordScan({ code, brand, quality, batch, sig });
+
+        if (data && data.auth === true) {
+          if (data.scan === "FIRST") {
+            // ✅ Primera vez
+            statusHint.innerHTML = "Signature verified successfully.<br><b>First verification</b> ✅";
+            setBadge("First scan", "#46ff9a");
+
+            meta.innerHTML +=
+              `<br><br>Scan status: <b class="good">FIRST</b> ✅` +
+              `<br>Verified at: <b>${data.first_seen_at || "—"}</b>`;
+          } else if (data.scan === "REPEAT") {
+            // ⚠️ Ya usado
+            statusText.textContent = "AUTHENTIC";
+            statusText.className = "big warn";
+            statusHint.innerHTML =
+              `Signature verified successfully.<br><b>Already verified</b> ⚠️<br>` +
+              `First scan: <b>${data.first_seen_at || "—"}</b>`;
+
+            setBadge("Already used", "#ffb000");
+
+            meta.innerHTML +=
+              `<br><br>Scan status: <b class="warn">REPEAT</b> ⚠️` +
+              `<br>First scan: <b>${data.first_seen_at || "—"}</b>`;
+          } else {
+            // fallback
+            setBadge("Verified", "#46ff9a");
+          }
+        } else {
+          // Si el server por algún motivo dice auth false
+          statusText.textContent = "FAKE";
+          statusText.className = "big bad";
+          statusHint.innerHTML = "Server verification failed.";
+          setBadge("Fake (server)", "#ff3b5c");
+
+          meta.innerHTML += `<br><br><b class="bad">Server rejected this code.</b>`;
+        }
+      } catch (e) {
+        // Backend caído o sin internet: seguimos mostrando autenticidad local
+        statusHint.innerHTML =
+          `Signature verified successfully.<br>` +
+          `<b>Offline:</b> could not record scan (network/backend).`;
+        setBadge("Verified (offline)", "#ffb000");
+
+        meta.innerHTML += `<br><br>Scan status: <b class="warn">OFFLINE</b> (could not record)`;
+      }
+
     }else{
       statusText.textContent = "FAKE";
       statusText.className = "big bad";
