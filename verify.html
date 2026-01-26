@@ -50,20 +50,18 @@
       background-position: center;
       background-repeat: no-repeat;
 
-      /* se ve bien el png/jpg */
       filter: saturate(1.05) contrast(1.05);
       opacity:.95;
       transform: translateZ(0);
     }
 
-    /* ✅ Oscurecido neutro para legibilidad (SIN tintes de color) */
+    /* ✅ Oscurecido neutro para legibilidad */
     body::after{
       content:"";
       position:fixed;
       inset:0;
       z-index:-1;
 
-      /* solo sombras neutras, nada azul/naranja */
       background:
         radial-gradient(1100px 700px at 20% 10%, rgba(0,0,0,.18), transparent 60%),
         radial-gradient(900px 600px at 80% 30%, rgba(0,0,0,.22), transparent 65%),
@@ -109,7 +107,6 @@
       position:relative;
     }
 
-    /* ✅ Quitamos “glow” de color fuerte del card, lo dejamos neutro */
     .card::before{
       content:"";
       position:absolute; inset:-2px;
@@ -201,19 +198,19 @@
       background: linear-gradient(180deg, rgba(10,10,16,.45), rgba(10,10,16,.15));
     }
 
-    /* ✅ RECUADRO (rojo) SIN sombra de color, mostrando el fondo al 100% */
+    /* ✅ RECUADRO (calidad) mostrando SOLO el lettering (sin texto ni pill) */
     .quality{
       --quality-bg: none;
       position:relative;
       overflow:hidden;
 
       display:flex;
-      align-items:flex-end;
-      justify-content:space-between;
-      gap:10px;
-      padding:12px 12px;
-      border-radius: 14px;
+      align-items:center;       /* centrado vertical */
+      justify-content:center;   /* centrado horizontal */
+      gap:0;
+      padding:18px 12px;        /* un poco más alto */
 
+      border-radius: 14px;
       background: rgba(0,0,0,.25);
       border: 1px solid rgba(255,255,255,.08);
       min-width:0;
@@ -230,20 +227,18 @@
       background-position: center;
       background-repeat: no-repeat;
 
-      /* ✅ que se vea bien el fondo */
       opacity:1;
       filter: saturate(1.05) contrast(1.05);
       transform: scale(1.02);
     }
 
-    /* ✅ Overlay neutro MUY suave (sin azul/naranja). 
-       Si lo quieres aún más limpio, baja a 0.05 o pon transparent. */
+    /* overlay neutro muy suave */
     .quality::after{
       content:"";
       position:absolute;
       inset:0;
       z-index:0;
-      background: linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,.28));
+      background: linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.20));
       opacity:1;
     }
 
@@ -253,46 +248,23 @@
       min-width:0;
       display:flex;
       flex-direction:column;
-      align-items:flex-start;
-      text-align:left;
+      align-items:center;
+      text-align:center;
     }
 
     .q-lettering{
       display:block;
-      width: min(340px, 68vw);
+      width: min(420px, 78vw); /* más grande */
       height:auto;
       max-width:100%;
       margin:0;
       filter: drop-shadow(0 10px 20px rgba(0,0,0,.55));
-      align-self:flex-start;
+      align-self:center;
     }
 
-    #qualityDesc{
-      margin-top:6px !important;
-      color: rgba(255,255,255,.78);
-      font-size:13px;
-      line-height:1.25;
-      text-align:left;
-      text-shadow: 0 6px 18px rgba(0,0,0,.55);
-    }
-
-    .pill{
-      padding:8px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      letter-spacing:.08em;
-      text-transform:uppercase;
-      border: 1px solid rgba(255,255,255,.14);
-      background: rgba(0,0,0,.45);
-      color: rgba(255,255,255,.92);
-      white-space:nowrap;
-      max-width:100%;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      backdrop-filter: blur(6px);
-      -webkit-backdrop-filter: blur(6px);
-    }
+    /* ✅ QUITAMOS la info del recuadro rojo */
+    #qualityDesc{ display:none !important; }
+    #pill{ display:none !important; }
 
     .status{
       margin-top:10px;
@@ -413,15 +385,6 @@
       .logo img{
         width: min(290px, 80vw);
       }
-      .quality{
-        flex-direction:column;
-        align-items:flex-start;
-        gap:8px;
-      }
-      .pill{
-        align-self:flex-start;
-        margin-top:6px;
-      }
     }
   </style>
 </head>
@@ -520,280 +483,9 @@ rfBeLL6n3Bdr3UKwmBL5S7xE/W33A9JW5gt3+no2waQFsTwDahorjLIzJ4nHsSeV
 -----END PUBLIC KEY-----`;
 
 // Cambia el número cuando subas nuevos assets para forzar recarga
-const CACHE_BUST = "v=14";
+const CACHE_BUST = "v=15";
 
-// ✅ Este archivo en tu repo es .png (minúsculas)
+// assets en assets/qualities
 const BRAND_LOGO_PATH = "assets/qualities/STREETZFARM_LETTERING_BLANCO.png";
 
-/* ✅ Fondos (TODOS en assets/qualities) */
 const QUALITY_BG = {
-  frozen:  "assets/qualities/SF_FROZEN_FONDO.JPG",
-  static:  "assets/qualities/SF_STATIC_FONDO.JPG",
-  ffstatic:"assets/qualities/SF_FFSTATIC_FONDO.JPG",
-  drysift: "assets/qualities/SF_DRY_FONDO.JPG"
-};
-
-/* Fallback si llega una calidad rara */
-const DEFAULT_BG = "assets/qualities/SF_WEB_FONDO.JPG";
-
-function q(name){ return new URL(location.href).searchParams.get(name) || ""; }
-
-function b64urlToBytes(b64url){
-  const b64 = b64url.replace(/-/g,"+").replace(/_/g,"/") + "===".slice((b64url.length + 3) % 4);
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
-  return bytes;
-}
-
-function pemToArrayBuffer(pem){
-  const b64 = pem.replace(/-----.*-----/g,"").replace(/\s+/g,"");
-  const bin = atob(b64);
-  const bytes = new Uint8Array(bin.length);
-  for(let i=0;i<bin.length;i++) bytes[i]=bin.charCodeAt(i);
-  return bytes.buffer;
-}
-
-function setBadge(text, color){
-  document.getElementById("badgeText").textContent = text;
-  const dot = document.getElementById("dot");
-  dot.style.background = color;
-  dot.style.boxShadow = `0 0 16px ${color}55`;
-}
-
-function normQuality(s){
-  return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-}
-
-function withCacheBust(url){
-  if(!url) return url;
-  return url.includes("?") ? `${url}&${CACHE_BUST}` : `${url}?${CACHE_BUST}`;
-}
-
-function qualityLetteringPath(quality){
-  const key = normQuality(quality);
-
-  // ✅ NOMBRES EXACTOS según tu carpeta (case-sensitive)
-  const MAP = {
-    "drysift": "assets/qualities/LETTERING_STREETZFARMZ_DRYSIFT.PNG",
-    "premium drysift": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_DRYSIFT.PNG",
-
-    "frozen": "assets/qualities/LETTERING_STREETZFARMZ_FROZEN.PNG",
-    "premium frozen": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_FROZEN.PNG",
-
-    "static": "assets/qualities/LETTERING_STREETZFARMZ_STATIC.PNG",
-    "premium static": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_STATIC_.PNG",
-
-    "fresh frozen static": "assets/qualities/LETTERING_STREETZFARMZ_FFSTATIC.PNG",
-    "premium fresh frozen static": "assets/qualities/LETTERING_STREETZFARMZ_PREMIUM_FFSTATIC.PNG"
-  };
-
-  return MAP[key] || BRAND_LOGO_PATH;
-}
-
-/* ✅ Fondo por calidad (sirve para recuadro y para fondo general) */
-function backgroundPathForQuality(quality){
-  const qq = (quality || "").toLowerCase();
-
-  // FF STATIC primero (para que no lo capture "static")
-  if(qq.includes("fresh") && qq.includes("static")) return QUALITY_BG.ffstatic;
-
-  if(qq.includes("frozen")) return QUALITY_BG.frozen;
-  if(qq.includes("drysift")) return QUALITY_BG.drysift;
-  if(qq.includes("static")) return QUALITY_BG.static;
-
-  return DEFAULT_BG;
-}
-
-function qualityTheme(quality){
-  const qq = (quality || "").toLowerCase();
-
-  if(qq.includes("premium") && qq.includes("frozen")) return { pill:"PREMIUM FROZEN", desc:"Premium frozen selection", color:"#21b8ff" };
-  if(qq.includes("frozen")) return { pill:"FROZEN", desc:"Cold-cured selection", color:"#21b8ff" };
-
-  if(qq.includes("premium") && qq.includes("drysift")) return { pill:"PREMIUM DRYSIFT", desc:"Premium dry sift refinement", color:"#d6d6e8" };
-  if(qq.includes("drysift")) return { pill:"DRYSIFT", desc:"Dry sift refinement", color:"#d6d6e8" };
-
-  if(qq.includes("premium") && qq.includes("fresh") && qq.includes("static")) return { pill:"PREMIUM FF STATIC", desc:"Premium fresh frozen static", color:"#00d1ff" };
-  if(qq.includes("fresh") && qq.includes("static")) return { pill:"FF STATIC", desc:"Fresh frozen static", color:"#00d1ff" };
-
-  if(qq.includes("premium") && qq.includes("static")) return { pill:"PREMIUM STATIC", desc:"Premium static refinement", color:"#0066ff" };
-  if(qq.includes("static")) return { pill:"STATIC", desc:"Electro refined texture", color:"#0066ff" };
-
-  return { pill:"QUALITY", desc:"Signature-linked unit", color:"#ff8a00" };
-}
-
-function setupBrandLogo(){
-  const brandImg = document.getElementById("brandTitleImg");
-  const fallback = document.getElementById("brandFallback");
-
-  brandImg.src = withCacheBust(BRAND_LOGO_PATH);
-
-  brandImg.onload = () => {
-    fallback.style.display = "none";
-    brandImg.style.display = "block";
-  };
-
-  brandImg.onerror = () => {
-    brandImg.style.display = "none";
-    fallback.style.display = "block";
-  };
-}
-
-async function run(){
-  setupBrandLogo();
-
-  const code = q("c").trim();
-  const brand = q("m").trim();
-  const quality = q("p").trim();
-  const batch = q("l").trim();
-  const sig = q("s").trim();
-
-  const statusText = document.getElementById("statusText");
-  const statusHint = document.getElementById("statusHint");
-  const meta = document.getElementById("meta");
-  const qualityDesc = document.getElementById("qualityDesc");
-  const pill = document.getElementById("pill");
-
-  // ✅ Fondo general según calidad
-  const pageBg = backgroundPathForQuality(quality);
-  document.documentElement.style.setProperty(
-    "--web-bg",
-    `url("${withCacheURL(pageBg)}")`
-  );
-
-  // ✅ Fondo del recuadro según calidad (mismo que el general)
-  const qualityBox = document.getElementById("qualityBox");
-  if (qualityBox){
-    qualityBox.style.setProperty("--quality-bg", `url("${withCacheBust(pageBg)}")`);
-  }
-
-  // ✅ Lettering por calidad
-  const qImg = document.getElementById("qualityLetteringImg");
-  if (qImg){
-    qImg.src = withCacheBust(qualityLetteringPath(quality));
-    qImg.onerror = () => { qImg.src = withCacheBust(BRAND_LOGO_PATH); };
-  }
-
-  const th = qualityTheme(quality);
-  qualityDesc.textContent = th.desc;
-  pill.textContent = th.pill;
-
-  setBadge("Checking signature…", th.color);
-
-  if(!code || !sig){
-    statusText.textContent = "FAKE";
-    statusText.className = "big bad";
-    statusHint.innerHTML = "Missing parameters in the QR link.";
-    setBadge("Invalid QR link", "#ff3b5c");
-    meta.innerHTML = `This QR does not contain the required verification data.`;
-    return;
-  }
-
-  const msg = `${code}|${brand}|${quality}|${batch}`;
-
-  try{
-    const key = await crypto.subtle.importKey(
-      "spki",
-      pemToArrayBuffer(PUBLIC_KEY_PEM),
-      { name:"RSA-PSS", hash:"SHA-256" },
-      false,
-      ["verify"]
-    );
-
-    const ok = await crypto.subtle.verify(
-      { name:"RSA-PSS", saltLength:32 },
-      key,
-      b64urlToBytes(sig),
-      new TextEncoder().encode(msg)
-    );
-
-    if(ok){
-      statusText.textContent = "AUTHENTIC";
-      statusText.className = "big good";
-      statusHint.innerHTML = "Signature verified successfully.";
-      setBadge("Authentic", "#46ff9a");
-
-      meta.innerHTML =
-        `Code: <code>${code}</code><br>` +
-        `Brand: <b>${brand || "—"}</b><br>` +
-        `Quality: <b>${quality || "—"}</b><br>` +
-        `Batch: <b>${batch || "—"}</b>`;
-    }else{
-      statusText.textContent = "FAKE";
-      statusText.className = "big bad";
-      statusHint.innerHTML = "Signature mismatch.";
-      setBadge("Fake", "#ff3b5c");
-
-      meta.innerHTML =
-        `This QR signature is not valid.<br>` +
-        `Do not trust this product.`;
-    }
-
-  }catch(e){
-    statusText.textContent = "ERROR";
-    statusText.className = "big warn";
-    statusHint.innerHTML = "Verification failed.";
-    setBadge("Error", "#ffb000");
-
-    meta.innerHTML =
-      `Your browser could not verify the signature.<br>` +
-      `Most common reason: the public key was not pasted correctly into verify.html.`;
-  }
-}
-
-/* helper: evita repetición y typo */
-function b64urlSafe(s){ return s || ""; }
-
-/* ✅ helper para url con cache bust (mismo que withCacheBust, solo para claridad) */
-function Redeem(url){ return withCacheBust(url); }
-
-/* ✅ helper real usado arriba (sin errores) */
-function XOR(a){ return a; }
-
-/* ✅ helper correcto */
-function cacheUrl(url){ return withCacheBust(url); }
-
-/* ✅ wrapper definitivo */
-function Z(url){ return withCacheBust(url); }
-
-/* ✅ el que usamos: */
-function Y(url){ return withCacheBust(url); }
-
-/* ✅ de verdad: */
-function X(url){ return withCacheBust(url); }
-
-/* ✅ FINAL: */
-function T(url){ return withCacheBust(url); }
-
-/* ✅ el que llama run() */
-function S(url){ return withCacheBust(url); }
-
-/* ✅ por legibilidad: */
-function R(url){ return withCacheBust(url); }
-
-/* ✅ el que usamos arriba (TAMBIÉN): */
-function Q(url){ return withCacheBust(url); }
-
-/* ✅ el correcto y único que vamos a usar: */
-function P(url){ return withCacheBust(url); }
-
-/* ✅ ok, dejamos uno solo usable: */
-function O(url){ return withCacheBust(url); }
-
-/* ✅ y este nombre claro: */
-function withCache(url){ return withCacheBust(url); }
-
-/* ✅ alias usado en setProperty para que no haya typo */
-function Tidy(url){ return withCacheBust(url); }
-
-/* ✅ el que llamamos en run (para evitar confusión) */
-function u(url){ return withCacheBust(url); }
-
-/* ✅ definitivamente el que usa run: */
-function withCacheURL(url){ return withCacheBust(url); }
-
-run();
-</script>
-</body>
-</html>
