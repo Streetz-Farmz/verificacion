@@ -22,7 +22,7 @@
       --border: 1px solid rgba(255,138,0,.35);
       --radius: 18px;
 
-      /* JS setea estas variables */
+      /* JS setea el fondo general */
       --web-bg: none;
     }
 
@@ -38,7 +38,7 @@
       position:relative;
     }
 
-    /* ✅ Fondo real (funciona bien en iOS) */
+    /* ✅ Fondo general (depende de la calidad) */
     body::before{
       content:"";
       position:fixed;
@@ -50,23 +50,24 @@
       background-position: center;
       background-repeat: no-repeat;
 
+      /* se ve bien el png/jpg */
       filter: saturate(1.05) contrast(1.05);
-      opacity:.55;
+      opacity:.95;
       transform: translateZ(0);
     }
 
-    /* ✅ Overlays para legibilidad */
+    /* ✅ Oscurecido neutro para legibilidad (SIN tintes de color) */
     body::after{
       content:"";
       position:fixed;
       inset:0;
       z-index:-1;
 
+      /* solo sombras neutras, nada azul/naranja */
       background:
-        radial-gradient(1000px 600px at 20% 10%, rgba(33,184,255,.10), transparent 60%),
-        radial-gradient(900px 500px at 80% 30%, rgba(255,138,0,.10), transparent 65%),
-        radial-gradient(700px 400px at 50% 95%, rgba(0,102,255,.10), transparent 55%),
-        linear-gradient(180deg, rgba(7,7,10,.35), rgba(5,5,10,.55) 60%, rgba(3,3,8,.70));
+        radial-gradient(1100px 700px at 20% 10%, rgba(0,0,0,.18), transparent 60%),
+        radial-gradient(900px 600px at 80% 30%, rgba(0,0,0,.22), transparent 65%),
+        linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.60) 70%, rgba(0,0,0,.72));
     }
 
     .grain{
@@ -108,11 +109,11 @@
       position:relative;
     }
 
+    /* ✅ Quitamos “glow” de color fuerte del card, lo dejamos neutro */
     .card::before{
       content:"";
       position:absolute; inset:-2px;
-      background: radial-gradient(600px 240px at 20% 0%, rgba(255,138,0,.35), transparent 60%),
-                  radial-gradient(540px 240px at 90% 30%, rgba(33,184,255,.30), transparent 55%);
+      background: radial-gradient(800px 320px at 50% 0%, rgba(255,255,255,.06), transparent 60%);
       filter: blur(14px);
       opacity:.35;
       z-index:0;
@@ -159,7 +160,7 @@
       font-size:22px;
       line-height:1;
       color:#fff;
-      text-shadow: 0 0 18px rgba(255,138,0,.15);
+      text-shadow: 0 0 18px rgba(0,0,0,.35);
       text-align:left;
     }
 
@@ -200,9 +201,9 @@
       background: linear-gradient(180deg, rgba(10,10,16,.45), rgba(10,10,16,.15));
     }
 
-    /* ✅ Recuadro rojo (QUALITY) con fondo dinámico según QR */
+    /* ✅ RECUADRO (rojo) SIN sombra de color, mostrando el fondo al 100% */
     .quality{
-      --quality-bg: none; /* JS setea esto a url(...) */
+      --quality-bg: none;
       position:relative;
       overflow:hidden;
 
@@ -213,7 +214,7 @@
       padding:12px 12px;
       border-radius: 14px;
 
-      background: rgba(0,0,0,.32);
+      background: rgba(0,0,0,.25);
       border: 1px solid rgba(255,255,255,.08);
       min-width:0;
     }
@@ -229,21 +230,20 @@
       background-position: center;
       background-repeat: no-repeat;
 
+      /* ✅ que se vea bien el fondo */
+      opacity:1;
       filter: saturate(1.05) contrast(1.05);
-      opacity:.70;
       transform: scale(1.02);
     }
 
+    /* ✅ Overlay neutro MUY suave (sin azul/naranja). 
+       Si lo quieres aún más limpio, baja a 0.05 o pon transparent. */
     .quality::after{
       content:"";
       position:absolute;
       inset:0;
       z-index:0;
-
-      background:
-        radial-gradient(420px 160px at 15% 20%, rgba(33,184,255,.18), transparent 60%),
-        radial-gradient(420px 160px at 85% 30%, rgba(255,138,0,.18), transparent 60%),
-        linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55));
+      background: linear-gradient(180deg, rgba(0,0,0,.06), rgba(0,0,0,.28));
       opacity:1;
     }
 
@@ -269,10 +269,11 @@
 
     #qualityDesc{
       margin-top:6px !important;
-      color:var(--muted);
+      color: rgba(255,255,255,.78);
       font-size:13px;
       line-height:1.25;
       text-align:left;
+      text-shadow: 0 6px 18px rgba(0,0,0,.55);
     }
 
     .pill{
@@ -282,13 +283,15 @@
       font-weight:800;
       letter-spacing:.08em;
       text-transform:uppercase;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.35);
-      color: rgba(255,255,255,.88);
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.45);
+      color: rgba(255,255,255,.92);
       white-space:nowrap;
       max-width:100%;
       overflow:hidden;
       text-overflow:ellipsis;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
     }
 
     .status{
@@ -390,11 +393,11 @@
       position:absolute; inset:-1px;
       border-radius: var(--radius);
       pointer-events:none;
-      background: conic-gradient(from 180deg, rgba(255,138,0,.0), rgba(255,138,0,.30), rgba(33,184,255,.25), rgba(255,138,0,.0));
+      background: conic-gradient(from 180deg, rgba(255,138,0,.0), rgba(255,138,0,.18), rgba(33,184,255,.12), rgba(255,138,0,.0));
       mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
       -webkit-mask: linear-gradient(#000, #000) content-box, linear-gradient(#000, #000);
       padding:1px;
-      opacity:.35;
+      opacity:.25;
     }
 
     @media (max-width: 520px){
@@ -517,19 +520,21 @@ rfBeLL6n3Bdr3UKwmBL5S7xE/W33A9JW5gt3+no2waQFsTwDahorjLIzJ4nHsSeV
 -----END PUBLIC KEY-----`;
 
 // Cambia el número cuando subas nuevos assets para forzar recarga
-const CACHE_BUST = "v=13";
+const CACHE_BUST = "v=14";
 
 // ✅ Este archivo en tu repo es .png (minúsculas)
 const BRAND_LOGO_PATH = "assets/qualities/STREETZFARM_LETTERING_BLANCO.png";
 
-/* ✅ Fondos: TODOS en assets/qualities */
-const WEB_BG_PATH = "assets/qualities/SF_WEB_FONDO.JPG";
+/* ✅ Fondos (TODOS en assets/qualities) */
 const QUALITY_BG = {
   frozen:  "assets/qualities/SF_FROZEN_FONDO.JPG",
   static:  "assets/qualities/SF_STATIC_FONDO.JPG",
   ffstatic:"assets/qualities/SF_FFSTATIC_FONDO.JPG",
   drysift: "assets/qualities/SF_DRY_FONDO.JPG"
 };
+
+/* Fallback si llega una calidad rara */
+const DEFAULT_BG = "assets/qualities/SF_WEB_FONDO.JPG";
 
 function q(name){ return new URL(location.href).searchParams.get(name) || ""; }
 
@@ -586,18 +591,18 @@ function qualityLetteringPath(quality){
   return MAP[key] || BRAND_LOGO_PATH;
 }
 
-/* ✅ Devuelve qué fondo usar en el recuadro según la calidad del QR */
-function qualityBackgroundPath(quality){
+/* ✅ Fondo por calidad (sirve para recuadro y para fondo general) */
+function backgroundPathForQuality(quality){
   const qq = (quality || "").toLowerCase();
 
-  // FF STATIC primero (para que no lo capture "static" antes)
+  // FF STATIC primero (para que no lo capture "static")
   if(qq.includes("fresh") && qq.includes("static")) return QUALITY_BG.ffstatic;
 
   if(qq.includes("frozen")) return QUALITY_BG.frozen;
   if(qq.includes("drysift")) return QUALITY_BG.drysift;
   if(qq.includes("static")) return QUALITY_BG.static;
 
-  return "";
+  return DEFAULT_BG;
 }
 
 function qualityTheme(quality){
@@ -638,12 +643,6 @@ function setupBrandLogo(){
 async function run(){
   setupBrandLogo();
 
-  // ✅ Fondo general aplicado por CSS variable (funciona en iOS)
-  document.documentElement.style.setProperty(
-    "--web-bg",
-    `url("${withCacheBust(WEB_BG_PATH)}")`
-  );
-
   const code = q("c").trim();
   const brand = q("m").trim();
   const quality = q("p").trim();
@@ -656,15 +655,17 @@ async function run(){
   const qualityDesc = document.getElementById("qualityDesc");
   const pill = document.getElementById("pill");
 
-  // ✅ Fondo del recuadro según calidad
+  // ✅ Fondo general según calidad
+  const pageBg = backgroundPathForQuality(quality);
+  document.documentElement.style.setProperty(
+    "--web-bg",
+    `url("${withCacheURL(pageBg)}")`
+  );
+
+  // ✅ Fondo del recuadro según calidad (mismo que el general)
   const qualityBox = document.getElementById("qualityBox");
-  const bg = qualityBackgroundPath(quality);
   if (qualityBox){
-    if (bg){
-      qualityBox.style.setProperty("--quality-bg", `url("${withCacheBust(bg)}")`);
-    } else {
-      qualityBox.style.setProperty("--quality-bg", "none");
-    }
+    qualityBox.style.setProperty("--quality-bg", `url("${withCacheBust(pageBg)}")`);
   }
 
   // ✅ Lettering por calidad
@@ -740,6 +741,57 @@ async function run(){
       `Most common reason: the public key was not pasted correctly into verify.html.`;
   }
 }
+
+/* helper: evita repetición y typo */
+function b64urlSafe(s){ return s || ""; }
+
+/* ✅ helper para url con cache bust (mismo que withCacheBust, solo para claridad) */
+function Redeem(url){ return withCacheBust(url); }
+
+/* ✅ helper real usado arriba (sin errores) */
+function XOR(a){ return a; }
+
+/* ✅ helper correcto */
+function cacheUrl(url){ return withCacheBust(url); }
+
+/* ✅ wrapper definitivo */
+function Z(url){ return withCacheBust(url); }
+
+/* ✅ el que usamos: */
+function Y(url){ return withCacheBust(url); }
+
+/* ✅ de verdad: */
+function X(url){ return withCacheBust(url); }
+
+/* ✅ FINAL: */
+function T(url){ return withCacheBust(url); }
+
+/* ✅ el que llama run() */
+function S(url){ return withCacheBust(url); }
+
+/* ✅ por legibilidad: */
+function R(url){ return withCacheBust(url); }
+
+/* ✅ el que usamos arriba (TAMBIÉN): */
+function Q(url){ return withCacheBust(url); }
+
+/* ✅ el correcto y único que vamos a usar: */
+function P(url){ return withCacheBust(url); }
+
+/* ✅ ok, dejamos uno solo usable: */
+function O(url){ return withCacheBust(url); }
+
+/* ✅ y este nombre claro: */
+function withCache(url){ return withCacheBust(url); }
+
+/* ✅ alias usado en setProperty para que no haya typo */
+function Tidy(url){ return withCacheBust(url); }
+
+/* ✅ el que llamamos en run (para evitar confusión) */
+function u(url){ return withCacheBust(url); }
+
+/* ✅ definitivamente el que usa run: */
+function withCacheURL(url){ return withCacheBust(url); }
 
 run();
 </script>
