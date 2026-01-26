@@ -21,24 +21,52 @@
       --shadow: 0 18px 60px rgba(0,0,0,.65);
       --border: 1px solid rgba(255,138,0,.35);
       --radius: 18px;
+
+      /* JS setea estas variables */
+      --web-bg: none;
     }
 
     *{box-sizing:border-box}
     html,body{height:100%}
+
     body{
       margin:0;
       font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial;
       color:var(--text);
+      background:#07070a;
+      overflow-x:hidden;
+      position:relative;
+    }
 
-      /* ✅ Fondo general desde imagen (ahora en assets/qualities) + overlays para legibilidad */
+    /* ✅ Fondo real (funciona bien en iOS) */
+    body::before{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-2;
+
+      background-image: var(--web-bg, none);
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+
+      filter: saturate(1.05) contrast(1.05);
+      opacity:.55;
+      transform: translateZ(0);
+    }
+
+    /* ✅ Overlays para legibilidad */
+    body::after{
+      content:"";
+      position:fixed;
+      inset:0;
+      z-index:-1;
+
       background:
         radial-gradient(1000px 600px at 20% 10%, rgba(33,184,255,.10), transparent 60%),
         radial-gradient(900px 500px at 80% 30%, rgba(255,138,0,.10), transparent 65%),
         radial-gradient(700px 400px at 50% 95%, rgba(0,102,255,.10), transparent 55%),
-        linear-gradient(180deg, rgba(7,7,10,.82), rgba(5,5,10,.86) 60%, rgba(3,3,8,.92)),
-        url("assets/qualities/SF_WEB_FONDO.JPG") center/cover no-repeat fixed;
-
-      overflow-x:hidden;
+        linear-gradient(180deg, rgba(7,7,10,.35), rgba(5,5,10,.55) 60%, rgba(3,3,8,.70));
     }
 
     .grain{
@@ -47,6 +75,7 @@
       background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E");
       mix-blend-mode:overlay;
       opacity:.22;
+      z-index:0;
     }
 
     .wrap{
@@ -55,6 +84,8 @@
       align-items:center;
       justify-content:center;
       padding:12px 12px;
+      position:relative;
+      z-index:1;
     }
 
     .shell{
@@ -182,7 +213,6 @@
       padding:12px 12px;
       border-radius: 14px;
 
-      /* Base oscura para legibilidad (el fondo real está en ::before) */
       background: rgba(0,0,0,.32);
       border: 1px solid rgba(255,255,255,.08);
       min-width:0;
@@ -194,15 +224,13 @@
       inset:0;
       z-index:0;
 
-      /* ✅ Imagen específica por calidad */
       background-image: var(--quality-bg);
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
 
-      /* Ajustes de legibilidad */
       filter: saturate(1.05) contrast(1.05);
-      opacity:.65;
+      opacity:.70;
       transform: scale(1.02);
     }
 
@@ -212,11 +240,10 @@
       inset:0;
       z-index:0;
 
-      /* overlays para mantener el estilo y que el texto se lea bien */
       background:
         radial-gradient(420px 160px at 15% 20%, rgba(33,184,255,.18), transparent 60%),
         radial-gradient(420px 160px at 85% 30%, rgba(255,138,0,.18), transparent 60%),
-        linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55));
+        linear-gradient(180deg, rgba(0,0,0,.25), rgba(0,0,0,.55));
       opacity:1;
     }
 
@@ -490,12 +517,12 @@ rfBeLL6n3Bdr3UKwmBL5S7xE/W33A9JW5gt3+no2waQFsTwDahorjLIzJ4nHsSeV
 -----END PUBLIC KEY-----`;
 
 // Cambia el número cuando subas nuevos assets para forzar recarga
-const CACHE_BUST = "v=12";
+const CACHE_BUST = "v=13";
 
 // ✅ Este archivo en tu repo es .png (minúsculas)
 const BRAND_LOGO_PATH = "assets/qualities/STREETZFARM_LETTERING_BLANCO.png";
 
-/* ✅ Fondos: ahora TODOS en assets/qualities */
+/* ✅ Fondos: TODOS en assets/qualities */
 const WEB_BG_PATH = "assets/qualities/SF_WEB_FONDO.JPG";
 const QUALITY_BG = {
   frozen:  "assets/qualities/SF_FROZEN_FONDO.JPG",
@@ -570,7 +597,6 @@ function qualityBackgroundPath(quality){
   if(qq.includes("drysift")) return QUALITY_BG.drysift;
   if(qq.includes("static")) return QUALITY_BG.static;
 
-  // default: si viene algo raro, deja sin imagen (solo oscuro)
   return "";
 }
 
@@ -611,6 +637,12 @@ function setupBrandLogo(){
 
 async function run(){
   setupBrandLogo();
+
+  // ✅ Fondo general aplicado por CSS variable (funciona en iOS)
+  document.documentElement.style.setProperty(
+    "--web-bg",
+    `url("${withCacheBust(WEB_BG_PATH)}")`
+  );
 
   const code = q("c").trim();
   const brand = q("m").trim();
