@@ -758,12 +758,10 @@ async function run(){
 
         if (data && data.auth === true) {
           if (data.scan === "FIRST") {
-            statusHint.innerHTML = "Signature verified successfully.<br><b>First verification</b> ✅";
             setBadge("First scan", "#46ff9a");
 
             meta.innerHTML +=
-              `<br>Scan status: <b class="good">FIRST</b> ✅` +
-              `<br>Verified at: <b>${data.first_seen_at || "—"}</b>`;
+              `<br>Scan status: <b class="good">FIRST</b>
           } else if (data.scan === "REPEAT") {
           // ✅ REPEAT = Verification available (sin warning, en verde)
           statusText.textContent = "AUTHENTIC";
@@ -777,7 +775,7 @@ async function run(){
 
           // Meta: cambiar scan status por verification state, sin ⚠️ y sin first scan
           meta.innerHTML +=
-        `<br>Verification state: <b class="good">available</b>`;
+        `<br>Verification state: <b class="good">AVAILABLE</b>`;
         }
 
         } else {
