@@ -765,19 +765,21 @@ async function run(){
               `<br>Scan status: <b class="good">FIRST</b> ✅` +
               `<br>Verified at: <b>${data.first_seen_at || "—"}</b>`;
           } else if (data.scan === "REPEAT") {
-            // REPEAT real
-            statusText.textContent = "AUTHENTIC";
-            statusText.className = "big warn";
-            statusHint.innerHTML =
-              `Signature verified successfully.<br><b>Already verified</b> ⚠️<br>` +
-              `First scan: <b>${data.first_seen_at || "—"}</b>`;
+          // ✅ REPEAT = Verification available (sin warning, en verde)
+          statusText.textContent = "AUTHENTIC";
+          statusText.className = "big good"; // verde
 
-            setBadge("Already used", "#ffb000");
+          // A la derecha quitamos todo: dejamos vacío
+          statusHint.innerHTML = "";
 
-            meta.innerHTML +=
-              `<br>Scan status: <b class="warn">REPEAT</b> ⚠️` +
-              `<br>First scan: <b>${data.first_seen_at || "—"}</b>`;
-          }
+          // Badge superior: "Verification available" en verde
+          setBadge("Verification available", "#46ff9a");
+
+          // Meta: cambiar scan status por verification state, sin ⚠️ y sin first scan
+          meta.innerHTML +=
+        `<br>Verification state: <b class="good">available</b>`;
+        }
+
         } else {
           statusText.textContent = "FAKE";
           statusText.className = "big bad";
