@@ -471,14 +471,10 @@
     </div>
   </div>
 
-<script>
-/** ✅ Cloudflare Worker endpoint (one-time scan) */
-const API_SCAN_URL = "https://streetzfarmz-qr.streetzfarmz.workers.dev/scan";
-
-// Anti doble llamada por carga / recargas raras
-let scanRequestInFlight = false;
-let scanDoneForThisPage = false;
-
+  <script>
+/* ============================
+   CONFIG
+============================ */
 const PUBLIC_KEY_PEM = `-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAugMJ76e+l3g7DepjOdzE
 S0FKgnaWM7jlSsUfCjqNUz6qHxmurZfOiPreHywxy5jodZyR96ZZf631PqK6UUai
@@ -489,8 +485,11 @@ rfBeLL6n3Bdr3UKwmBL5S7xE/W33A9JW5gt3+no2waQFsTwDahorjLIzJ4nHsSeV
 8wIDAQAB
 -----END PUBLIC KEY-----`;
 
+const API_BASE = "https://streetzfarmz-qr.streetzfarmz.workers.dev"; // /scan
+const MAX_SCANS_FALLBACK = 1100;
+
 // Cambia el número cuando subas nuevos assets para forzar recarga
-const CACHE_BUST = "v=17";
+const CACHE_BUST = "v=18";
 
 // assets en assets/qualities
 const BRAND_LOGO_PATH = "assets/qualities/STREETZFARM_LOGO_MAROC.png";
@@ -503,7 +502,15 @@ const QUALITY_BG = {
 };
 const DEFAULT_BG = "assets/qualities/SF_WEB_FONDO.JPG";
 
+/* ============================
+   HELPERS
+============================ */
 function q(name){ return new URL(location.href).searchParams.get(name) || ""; }
+
+function withCacheBust(url){
+  if(!url) return url;
+  return url.includes("?") ? `${url}&${CACHE_BUST}` : `${url}?${CACHE_BUST}`;
+}
 
 function b64urlToBytes(b64url){
   const b64 = b64url.replace(/-/g,"+").replace(/_/g,"/") + "===".slice((b64url.length + 3) % 4);
@@ -530,28 +537,6 @@ function setBadge(text, color){
 
 function normQuality(s){
   return (s || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-}
-
-function withCacheBust(url){
-  if(!url) return url;
-  return url.includes("?") ? `${url}&${CACHE_BUST}` : `${url}?${CACHE_BUST}`;
-}
-
-function setupBrandLogo(){
-  const brandImg = document.getElementById("brandTitleImg");
-  const fallback = document.getElementById("brandFallback");
-
-  brandImg.src = withCacheBust(BRAND_LOGO_PATH);
-
-  brandImg.onload = () => {
-    fallback.style.display = "none";
-    brandImg.style.display = "block";
-  };
-
-  brandImg.onerror = () => {
-    brandImg.style.display = "none";
-    fallback.style.display = "block";
-  };
 }
 
 function qualityLetteringPath(quality){
@@ -603,44 +588,80 @@ function qualityTheme(quality){
   return { color:"#ff8a00" };
 }
 
-/** ✅ Llama al backend para registrar 1er escaneo / detectar repetido */
-async function recordScan({ code, brand, quality, batch, sig }) {
-  const payload = { c: code, m: brand, p: quality, l: batch, s: sig };
+function setupBrandLogo(){
+  const brandImg = document.getElementById("brandTitleImg");
+  const fallback = document.getElementById("brandFallback");
 
-  const r = await fetch(API_SCAN_URL, {
+  brandImg.src = withCacheBust(BRAND_LOGO_PATH);
+
+  brandImg.onload = () => {
+    fallback.style.display = "none";
+    brandImg.style.display = "block";
+  };
+
+  brandImg.onerror = () => {
+    brandImg.style.display = "none";
+    fallback.style.display = "block";
+  };
+}
+
+async function verifyOffline(msg, sig){
+  const key = await crypto.subtle.importKey(
+    "spki",
+    pemToArrayBuffer(PUBLIC_KEY_PEM),
+    { name:"RSA-PSS", hash:"SHA-256" },
+    false,
+    ["verify"]
+  );
+
+  return await crypto.subtle.verify(
+    { name:"RSA-PSS", saltLength:32 },
+    key,
+    b64urlToBytes(sig),
+    new TextEncoder().encode(msg)
+  );
+}
+
+async function recordScan(payload){
+  const res = await fetch(`${API_BASE}/scan`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      c: payload.code,
+      m: payload.brand,
+      p: payload.quality,
+      l: payload.batch,
+      s: payload.sig
+    })
   });
 
-  // Lee siempre texto para debug robusto
-  const text = await r.text().catch(() => "");
-
-  if (!r.ok) {
-    throw new Error(`API ${r.status}: ${text.slice(0, 200)}`);
+  if(!res.ok){
+    const txt = await res.text().catch(()=> "");
+    throw new Error(`HTTP ${res.status} ${txt}`);
   }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    throw new Error(`API returned non-JSON: ${text.slice(0, 200)}`);
-  }
+  return await res.json();
 }
+
+/* ============================
+   ANTI DOBLE LLAMADA (GLOBAL)
+============================ */
+let scanDoneForThisPage = false;
+let scanRequestInFlight = false;
 
 async function run(){
   setupBrandLogo();
 
   const code = q("c").trim();
-  const brand = q("m").trim().replace(/\+/g, " ");
-  const quality = q("p").trim().replace(/\+/g, " ");
-  const batch = q("l").trim().replace(/\+/g, " ");
+  const brand = q("m").trim();
+  const quality = q("p").trim();
+  const batch = q("l").trim();
   const sig = q("s").trim();
 
   const statusText = document.getElementById("statusText");
   const statusHint = document.getElementById("statusHint");
   const meta = document.getElementById("meta");
 
-  // ✅ Fondo general y del recuadro según calidad
+  // Fondo general y del recuadro según calidad
   const bg = backgroundPathForQuality(quality);
   document.documentElement.style.setProperty("--web-bg", `url("${withCacheBust(bg)}")`);
 
@@ -649,7 +670,7 @@ async function run(){
     qualityBox.style.setProperty("--quality-bg", `url("${withCacheBust(bg)}")`);
   }
 
-  // ✅ Lettering
+  // Lettering dentro del recuadro
   const qImg = document.getElementById("qualityLetteringImg");
   if (qImg){
     qImg.src = withCacheBust(qualityLetteringPath(quality));
@@ -670,130 +691,126 @@ async function run(){
 
   const msg = `${code}|${brand}|${quality}|${batch}`;
 
+  // 1) Verificación OFFLINE (firma)
+  let ok = false;
   try{
-    const key = await crypto.subtle.importKey(
-      "spki",
-      pemToArrayBuffer(PUBLIC_KEY_PEM),
-      { name:"RSA-PSS", hash:"SHA-256" },
-      false,
-      ["verify"]
-    );
-
-    const ok = await crypto.subtle.verify(
-      { name:"RSA-PSS", saltLength:32 },
-      key,
-      b64urlToBytes(sig),
-      new TextEncoder().encode(msg)
-    );
-
-    if(ok){
-      // ✅ Verificación local OK
-      statusText.textContent = "AUTHENTIC";
-      statusText.className = "big good";
-      statusHint.innerHTML = "Signature verified successfully.";
-      setBadge("Authentic", "#46ff9a");
-
-      meta.innerHTML =
-        `Code: <code>${code}</code><br>` +
-        `Brand: <b>${brand || "—"}</b><br>` +
-        `Quality: <b>${quality || "—"}</b><br>` +
-        `Batch: <b>${batch || "—"}</b>`;
-
-      // ✅ Registrar scan con anti doble llamada
-      if (!scanDoneForThisPage && !scanRequestInFlight) {
-        scanRequestInFlight = true;
-
-        const scanKey = `scan:${code}|${brand}|${quality}|${batch}`;
-        const last = Number(localStorage.getItem(scanKey) || "0");
-
-        if (Date.now() - last < 15000) {
-          scanRequestInFlight = false;
-        } else {
-          localStorage.setItem(scanKey, String(Date.now()));
-
-          try {
-            setBadge("Recording scan…", th.color);
-
-            const data = await recordScan({ code, brand, quality, batch, sig });
-
-            scanDoneForThisPage = true;
-
-            if (data && data.auth === true) {
-              if (data.scan === "FIRST") {
-                statusHint.innerHTML = "Signature verified successfully.<br><b>First verification</b> ✅";
-                setBadge("First scan", "#46ff9a");
-
-                meta.innerHTML +=
-                  `<br><br>Scan status: <b class="good">FIRST</b> ✅` +
-                  `<br>Verified at: <b>${data.first_seen_at || "—"}</b>`;
-              } else if (data.scan === "REPEAT") {
-                const first = data.first_seen_at ? Date.parse(data.first_seen_at) : null;
-                const now = Date.now();
-                const seconds = first ? (now - first) / 1000 : null;
-
-                if (seconds !== null && seconds < 20) {
-                  statusHint.innerHTML = "Signature verified successfully.<br><b>First verification</b> ✅";
-                  setBadge("First scan", "#46ff9a");
-
-                  meta.innerHTML +=
-                    `<br><br>Scan status: <b class="good">FIRST</b> ✅` +
-                    `<br>Verified at: <b>${data.first_seen_at || "—"}</b>`;
-                } else {
-                  statusText.textContent = "AUTHENTIC";
-                  statusText.className = "big warn";
-                  statusHint.innerHTML =
-                    `Signature verified successfully.<br><b>Already verified</b> ⚠️<br>` +
-                    `First scan: <b>${data.first_seen_at || "—"}</b>`;
-
-                  setBadge("Already used", "#ffb000");
-
-                  meta.innerHTML +=
-                    `<br><br>Scan status: <b class="warn">REPEAT</b> ⚠️` +
-                    `<br>First scan: <b>${data.first_seen_at || "—"}</b>`;
-                }
-              } else {
-                setBadge("Verified", "#46ff9a");
-              }
-            } else {
-              statusText.textContent = "FAKE";
-              statusText.className = "big bad";
-              statusHint.innerHTML = "Server verification failed.";
-              setBadge("Fake (server)", "#ff3b5c");
-              meta.innerHTML += `<br><br><b class="bad">Server rejected this code.</b>`;
-            }
-          } catch (e) {
-            console.error("recordScan failed:", e);
-            statusHint.innerHTML =
-              `Signature verified successfully.<br>` +
-              `<b>Offline:</b> could not record scan (network/backend).`;
-            setBadge("Verified (offline)", "#ffb000");
-            meta.innerHTML += `<br><br>Scan status: <b class="warn">OFFLINE</b> (could not record)`;
-          } finally {
-            scanRequestInFlight = false;
-          }
-        }
-      }
-
-    }else{
-      statusText.textContent = "FAKE";
-      statusText.className = "big bad";
-      statusHint.innerHTML = "Signature mismatch.";
-      setBadge("Fake", "#ff3b5c");
-
-      meta.innerHTML =
-        `This QR signature is not valid.<br>` +
-        `Do not trust this product.`;
-    }
-
+    ok = await verifyOffline(msg, sig);
   }catch(e){
+    console.error(e);
     statusText.textContent = "ERROR";
     statusText.className = "big warn";
-    statusHint.innerHTML = "Verification failed.";
+    statusHint.innerHTML = "Verification failed (crypto error).";
     setBadge("Error", "#ffb000");
-
     meta.innerHTML =
       `Your browser could not verify the signature.<br>` +
       `Most common reason: the public key was not pasted correctly into verify.html.`;
+    return;
+  }
+
+  if(!ok){
+    statusText.textContent = "FAKE";
+    statusText.className = "big bad";
+    statusHint.innerHTML = "Signature mismatch.";
+    setBadge("Fake", "#ff3b5c");
+    meta.innerHTML = `This QR signature is not valid.<br>Do not trust this product.`;
+    return;
+  }
+
+  // OK offline => mostramos datos base
+  statusText.textContent = "AUTHENTIC";
+  statusText.className = "big good";
+  statusHint.innerHTML = "Signature verified successfully.";
+  setBadge("Verified", "#46ff9a");
+
+  meta.innerHTML =
+    `Code: <code>${code}</code><br>` +
+    `Brand: <b>${brand || "—"}</b><br>` +
+    `Quality: <b>${quality || "—"}</b><br>` +
+    `Batch: <b>${batch || "—"}</b>`;
+
+  // 2) Registrar scan en backend + contador
+  // ✅ Evita doble llamada (por recargas/duplicación)
+  if (!scanDoneForThisPage && !scanRequestInFlight) {
+    scanRequestInFlight = true;
+
+    // ✅ Anti doble apertura en el mismo dispositivo (15s)
+    const scanKey = `scan:${code}|${brand}|${quality}|${batch}`;
+    const last = Number(localStorage.getItem(scanKey) || "0");
+
+    if (Date.now() - last < 15000) {
+      scanRequestInFlight = false;
+      // Si hace <15s ya intentamos registrar este mismo QR en este dispositivo,
+      // no volvemos a llamar al backend.
+    } else {
+      localStorage.setItem(scanKey, String(Date.now()));
+
+      try {
+        setBadge("Recording scan…", th.color);
+
+        const data = await recordScan({ code, brand, quality, batch, sig });
+
+        scanDoneForThisPage = true;
+
+        // contador
+        const cnt = Number(data?.scan_count ?? 0);
+        const max = Number(data?.max_scans ?? MAX_SCANS_FALLBACK);
+        meta.innerHTML += `<br><br>Scans: <b>${cnt}/${max}</b>`;
+
+        if (data && data.auth === true) {
+          if (data.scan === "FIRST") {
+            statusHint.innerHTML = "Signature verified successfully.<br><b>First verification</b> ✅";
+            setBadge("First scan", "#46ff9a");
+
+            meta.innerHTML +=
+              `<br>Scan status: <b class="good">FIRST</b> ✅` +
+              `<br>Verified at: <b>${data.first_seen_at || "—"}</b>`;
+          } else if (data.scan === "REPEAT") {
+            // REPEAT real
+            statusText.textContent = "AUTHENTIC";
+            statusText.className = "big warn";
+            statusHint.innerHTML =
+              `Signature verified successfully.<br><b>Already verified</b> ⚠️<br>` +
+              `First scan: <b>${data.first_seen_at || "—"}</b>`;
+
+            setBadge("Already used", "#ffb000");
+
+            meta.innerHTML +=
+              `<br>Scan status: <b class="warn">REPEAT</b> ⚠️` +
+              `<br>First scan: <b>${data.first_seen_at || "—"}</b>`;
+          }
+        } else {
+          statusText.textContent = "FAKE";
+          statusText.className = "big bad";
+          statusHint.innerHTML = "Server verification failed.";
+          setBadge("Fake (server)", "#ff3b5c");
+          meta.innerHTML += `<br><br><b class="bad">Server rejected this code.</b>`;
+        }
+
+        // warning por tope
+        if (data?.over_limit) {
+          statusText.textContent = "AUTHENTIC";
+          statusText.className = "big warn";
+          setBadge("Over limit", "#ffb000");
+
+          statusHint.innerHTML =
+            `Signature verified successfully.<br>` +
+            `<b>Warning:</b> scanned more than <b>${max}</b> times. ⚠️`;
+
+          meta.innerHTML += `<br><b class="warn">Warning:</b> over ${max} scans.`;
+        }
+
+      } catch (e) {
+        console.error("recordScan failed:", e);
+
+        statusHint.innerHTML =
+          `Signature verified successfully.<br>` +
+          `<b>Offline:</b> could not record scan (network/backend).`;
+        setBadge("Verified (offline)", "#ffb000");
+        meta.innerHTML += `<br><br>Scan status: <b class="warn">OFFLINE</b> (could not record)`;
+      } finally {
+        scanRequestInFlight = false;
+      }
+    }
   }
 }
 
