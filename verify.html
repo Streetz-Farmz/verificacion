@@ -648,16 +648,32 @@ async function recordScan(payload){
 let scanDoneForThisPage = false;
 let scanRequestInFlight = false;
 
-function showVerificationAvailable(metaEl){
-  // Badge superior: "Verification available" en verde
+/* ============================
+   UI HELPERS (solo UI)
+============================ */
+function renderMetaBase(meta, code, brand, quality, batch){
+  meta.innerHTML =
+    `Code: <code>${code}</code><br>` +
+    `Brand: <b>${brand || "—"}</b><br>` +
+    `Quality: <b>${quality || "—"}</b><br>` +
+    `Batch: <b>${batch || "—"}</b>`;
+}
+
+function appendScansLine(meta, cnt, max){
+  meta.innerHTML += `<br><br>Scans: <b>${cnt}/${max}</b>`;
+}
+
+function showFirstUI(meta){
+  // “First scan”
+  setBadge("First scan", "#46ff9a");
+  meta.innerHTML += `<br>Scan status: <b class="good">FIRST</b>`;
+}
+
+function showAvailableUI(meta){
+  // ✅ Available (verde, sin warning)
   setBadge("Verification available", "#46ff9a");
-
-  // Derecha vacía (quitar todo)
-  const statusHint = document.getElementById("statusHint");
-  statusHint.innerHTML = "";
-
-  // Meta: "Verification state: AVAILABLE" (sin first scan debajo)
-  metaEl.innerHTML += `<br>Verification state: <b class="good">AVAILABLE</b>`;
+  document.getElementById("statusHint").innerHTML = "";
+  meta.innerHTML += `<br>Verification state: <b class="good">AVAILABLE</b>`;
 }
 
 async function run(){
@@ -734,26 +750,19 @@ async function run(){
   statusHint.innerHTML = "Signature verified successfully.";
   setBadge("Verified", "#46ff9a");
 
-  meta.innerHTML =
-    `Code: <code>${code}</code><br>` +
-    `Brand: <b>${brand || "—"}</b><br>` +
-    `Quality: <b>${quality || "—"}</b><br>` +
-    `Batch: <b>${batch || "—"}</b>`;
+  renderMetaBase(meta, code, brand, quality, batch);
 
   // 2) Registrar scan en backend + contador
   if (!scanDoneForThisPage && !scanRequestInFlight) {
     scanRequestInFlight = true;
 
-    // Anti doble apertura mismo dispositivo (15s): si está dentro, no llamamos backend
+    // Anti doble apertura mismo dispositivo (15s)
     const scanKey = `scan:${code}|${brand}|${quality}|${batch}`;
     const last = Number(localStorage.getItem(scanKey) || "0");
-    const shouldSkipBackend = (Date.now() - last < 15000);
-
-    if (shouldSkipBackend) {
+    if (Date.now() - last < 15000) {
       scanRequestInFlight = false;
       return;
     }
-
     localStorage.setItem(scanKey, String(Date.now()));
 
     try {
@@ -765,21 +774,32 @@ async function run(){
       const cnt = Number(data?.scan_count ?? 0);
       const max = Number(data?.max_scans ?? MAX_SCANS_FALLBACK);
 
-      meta.innerHTML += `<br><br>Scans: <b>${cnt}/${max}</b>`;
+      // ⚠️ CLAVE:
+      // Si por “doble llamada” te llega REPEAT con 2/1100 y el first_seen_at es MUY reciente,
+      // lo tratamos como “primer escaneo visual”: FIRST 1/1100 → 2s → AVAILABLE 2/1100
+      const firstSeen = data?.first_seen_at ? Date.parse(data.first_seen_at) : null;
+      const secondsSinceFirst = firstSeen ? (Date.now() - firstSeen) / 1000 : null;
+      const looksLikeDoubleCall = (data?.scan === "REPEAT" && cnt === 2 && secondsSinceFirst !== null && secondsSinceFirst < 8);
 
       if (data && data.auth === true) {
-        if (data.scan === "FIRST") {
-          // ✅ Mostrar FIRST y en 2s cambiar a AVAILABLE
-          setBadge("First scan", "#46ff9a");
-          meta.innerHTML += `<br>Scan status: <b class="good">FIRST</b>`;
+        if (data.scan === "FIRST" || looksLikeDoubleCall) {
+          // 1) FIRST UI inmediato con 1/1100
+          renderMetaBase(meta, code, brand, quality, batch);
+          appendScansLine(meta, 1, max);
+          showFirstUI(meta);
 
+          // 2) A los 2s: AVAILABLE + contador real (normalmente 2/1100 si hubo doble llamada)
           setTimeout(() => {
-            showVerificationAvailable(meta);
+            renderMetaBase(meta, code, brand, quality, batch);
+            appendScansLine(meta, (looksLikeDoubleCall ? cnt : 1), max);
+            showAvailableUI(meta);
           }, 2000);
 
-        } else if (data.scan === "REPEAT") {
-          // Repeat: directamente Available
-          showVerificationAvailable(meta);
+        } else {
+          // REPEAT normal: available directo con el contador real
+          renderMetaBase(meta, code, brand, quality, batch);
+          appendScansLine(meta, cnt, max);
+          showAvailableUI(meta);
         }
       } else {
         statusText.textContent = "FAKE";
@@ -789,7 +809,7 @@ async function run(){
         meta.innerHTML += `<br><br><b class="bad">Server rejected this code.</b>`;
       }
 
-      // Aviso por tope (texto pedido)
+      // Aviso por tope
       if (data?.over_limit) {
         const msgOver = `este qr se ha escaneado mas de ${max} veces`;
         statusHint.innerHTML = `<b>${msgOver}</b>`;
