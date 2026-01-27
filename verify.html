@@ -648,6 +648,18 @@ async function recordScan(payload){
 let scanDoneForThisPage = false;
 let scanRequestInFlight = false;
 
+function showVerificationAvailable(metaEl){
+  // Badge superior: "Verification available" en verde
+  setBadge("Verification available", "#46ff9a");
+
+  // Derecha vacía (quitar todo)
+  const statusHint = document.getElementById("statusHint");
+  statusHint.innerHTML = "";
+
+  // Meta: "Verification state: AVAILABLE" (sin first scan debajo)
+  metaEl.innerHTML += `<br>Verification state: <b class="good">AVAILABLE</b>`;
+}
+
 async function run(){
   setupBrandLogo();
 
@@ -729,92 +741,76 @@ async function run(){
     `Batch: <b>${batch || "—"}</b>`;
 
   // 2) Registrar scan en backend + contador
-  // ✅ Evita doble llamada (por recargas/duplicación)
   if (!scanDoneForThisPage && !scanRequestInFlight) {
     scanRequestInFlight = true;
 
-    // ✅ Anti doble apertura en el mismo dispositivo (15s)
+    // Anti doble apertura mismo dispositivo (15s): si está dentro, no llamamos backend
     const scanKey = `scan:${code}|${brand}|${quality}|${batch}`;
     const last = Number(localStorage.getItem(scanKey) || "0");
+    const shouldSkipBackend = (Date.now() - last < 15000);
 
-    if (Date.now() - last < 15000) {
+    if (shouldSkipBackend) {
       scanRequestInFlight = false;
-      // Si hace <15s ya intentamos registrar este mismo QR en este dispositivo,
-      // no volvemos a llamar al backend.
-    } else {
-      localStorage.setItem(scanKey, String(Date.now()));
+      return;
+    }
 
-      try {
-        setBadge("Recording scan…", th.color);
+    localStorage.setItem(scanKey, String(Date.now()));
 
-        const data = await recordScan({ code, brand, quality, batch, sig });
+    try {
+      setBadge("Recording scan…", th.color);
 
-        scanDoneForThisPage = true;
+      const data = await recordScan({ code, brand, quality, batch, sig });
+      scanDoneForThisPage = true;
 
-        // contador
-        const cnt = Number(data?.scan_count ?? 0);
-        const max = Number(data?.max_scans ?? MAX_SCANS_FALLBACK);
-        meta.innerHTML += `<br><br>Scans: <b>${cnt}/${max}</b>`;
+      const cnt = Number(data?.scan_count ?? 0);
+      const max = Number(data?.max_scans ?? MAX_SCANS_FALLBACK);
 
-        if (data && data.auth === true) {
-          if (data.scan === "FIRST") {
-            setBadge("First scan", "#46ff9a");
+      meta.innerHTML += `<br><br>Scans: <b>${cnt}/${max}</b>`;
 
-            meta.innerHTML +=
-              `<br>Scan status: <b class="good">FIRST</b>`;
-          } else if (data.scan === "REPEAT") {
-            // ✅ REPEAT = Verification available (sin warning, en verde)
-            statusText.textContent = "AUTHENTIC";
-            statusText.className = "big good"; // verde
+      if (data && data.auth === true) {
+        if (data.scan === "FIRST") {
+          // ✅ Mostrar FIRST y en 2s cambiar a AVAILABLE
+          setBadge("First scan", "#46ff9a");
+          meta.innerHTML += `<br>Scan status: <b class="good">FIRST</b>`;
 
-            // A la derecha quitamos todo: dejamos vacío
-            statusHint.innerHTML = "";
+          setTimeout(() => {
+            showVerificationAvailable(meta);
+          }, 2000);
 
-            // Badge superior: "Verification available" en verde
-            setBadge("Verification state", "#46ff9a");
-
-            // Meta: cambiar scan status por verification state, sin ⚠️ y sin first scan
-            meta.innerHTML +=
-              `<br>Verification state: <b class="good">AVAILABLE</b>`;
-          }
-
-        } else {
-          statusText.textContent = "FAKE";
-          statusText.className = "big bad";
-          statusHint.innerHTML = "Server verification failed.";
-          setBadge("Fake (server)", "#ff3b5c");
-          meta.innerHTML += `<br><br><b class="bad">Server rejected this code.</b>`;
+        } else if (data.scan === "REPEAT") {
+          // Repeat: directamente Available
+          showVerificationAvailable(meta);
         }
-
-        // warning por tope
-        if (data?.over_limit) {
-          statusText.textContent = "AUTHENTIC";
-          statusText.className = "big good"; // ✅ sigue verde
-          setBadge("Verification available", "#46ff9a"); // ✅ sigue verde
-
-          const msgOver = `este qr se ha escaneado mas de ${max} veces`;
-          statusHint.innerHTML = `<b>${msgOver}</b>`; // ✅ aviso añadido
-          meta.innerHTML += `<br><b class="warn">${msgOver}</b>`;
-        }
-
-      } catch (e) {
-        console.error("recordScan failed:", e);
-
-        statusHint.innerHTML =
-          `Signature verified successfully.<br>` +
-          `<b>Offline:</b> could not record scan (network/backend).`;
-        setBadge("Verified (offline)", "#ffb000");
-        meta.innerHTML += `<br><br>Scan status: <b class="warn">OFFLINE</b> (could not record)`;
-      } finally {
-        scanRequestInFlight = false;
+      } else {
+        statusText.textContent = "FAKE";
+        statusText.className = "big bad";
+        statusHint.innerHTML = "Server verification failed.";
+        setBadge("Fake (server)", "#ff3b5c");
+        meta.innerHTML += `<br><br><b class="bad">Server rejected this code.</b>`;
       }
+
+      // Aviso por tope (texto pedido)
+      if (data?.over_limit) {
+        const msgOver = `este qr se ha escaneado mas de ${max} veces`;
+        statusHint.innerHTML = `<b>${msgOver}</b>`;
+        meta.innerHTML += `<br><b class="warn">${msgOver}</b>`;
+      }
+
+    } catch (e) {
+      console.error("recordScan failed:", e);
+
+      statusHint.innerHTML =
+        `Signature verified successfully.<br>` +
+        `<b>Offline:</b> could not record scan (network/backend).`;
+      setBadge("Verified (offline)", "#ffb000");
+      meta.innerHTML += `<br><br>Scan status: <b class="warn">OFFLINE</b> (could not record)`;
+    } finally {
+      scanRequestInFlight = false;
     }
   }
 }
 
 run();
 </script>
-
- 
 </body>
 </html>
