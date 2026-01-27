@@ -763,20 +763,20 @@ async function run(){
             meta.innerHTML +=
               `<br>Scan status: <b class="good">FIRST</b>`;
           } else if (data.scan === "REPEAT") {
-          // ✅ REPEAT = Verification available (sin warning, en verde)
-          statusText.textContent = "AUTHENTIC";
-          statusText.className = "big good"; // verde
+            // ✅ REPEAT = Verification available (sin warning, en verde)
+            statusText.textContent = "AUTHENTIC";
+            statusText.className = "big good"; // verde
 
-          // A la derecha quitamos todo: dejamos vacío
-          statusHint.innerHTML = "";
+            // A la derecha quitamos todo: dejamos vacío
+            statusHint.innerHTML = "";
 
-          // Badge superior: "Verification available" en verde
-          setBadge("Verification available", "#46ff9a");
+            // Badge superior: "Verification available" en verde
+            setBadge("Verification state", "#46ff9a");
 
-          // Meta: cambiar scan status por verification state, sin ⚠️ y sin first scan
-          meta.innerHTML +=
-        `<br>Verification state: <b class="good">AVAILABLE</b>`;
-        }
+            // Meta: cambiar scan status por verification state, sin ⚠️ y sin first scan
+            meta.innerHTML +=
+              `<br>Verification state: <b class="good">AVAILABLE</b>`;
+          }
 
         } else {
           statusText.textContent = "FAKE";
@@ -789,14 +789,12 @@ async function run(){
         // warning por tope
         if (data?.over_limit) {
           statusText.textContent = "AUTHENTIC";
-          statusText.className = "big warn";
-          setBadge("Over limit", "#ffb000");
+          statusText.className = "big good"; // ✅ sigue verde
+          setBadge("Verification available", "#46ff9a"); // ✅ sigue verde
 
-          statusHint.innerHTML =
-            `Signature verified successfully.<br>` +
-            `<b>Warning:</b> scanned more than <b>${max}</b> times. ⚠️`;
-
-          meta.innerHTML += `<br><b class="warn">Warning:</b> over ${max} scans.`;
+          const msgOver = `este qr se ha escaneado mas de ${max} veces`;
+          statusHint.innerHTML = `<b>${msgOver}</b>`; // ✅ aviso añadido
+          meta.innerHTML += `<br><b class="warn">${msgOver}</b>`;
         }
 
       } catch (e) {
@@ -816,5 +814,7 @@ async function run(){
 
 run();
 </script>
+
+ 
 </body>
 </html>
